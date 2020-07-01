@@ -417,7 +417,7 @@ public class CustomTwilioVideoView extends View implements LifecycleEventListene
         }
 
         // TODO: provide this via a parameter
-        connectOptionsBuilder.enableAutomaticSubscription(false)
+        connectOptionsBuilder.enableAutomaticSubscription(false);
 
         room = Video.connect(getContext(), connectOptionsBuilder.build(), roomListener());
     }
