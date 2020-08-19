@@ -149,6 +149,7 @@ public class CustomTwilioVideoView extends View implements LifecycleEventListene
     private AudioFocusRequest audioFocusRequest;
     private AudioAttributes playbackAttributes;
     private Handler handler = new Handler();
+    private boolean bluetoothEnabled;
 
     /*
      * A Room represents communication between the client and one or more participants.
@@ -343,6 +344,10 @@ public class CustomTwilioVideoView extends View implements LifecycleEventListene
             disconnectedFromOnDestroy = true;
         }
 
+        if(bluetoothEnabled){
+            toggleBluetoothHeadset(false);
+        }
+
         /*
          * Release the local media ensuring any memory allocated to audio or video is freed.
          */
@@ -424,6 +429,7 @@ public class CustomTwilioVideoView extends View implements LifecycleEventListene
 
     private void setAudioFocus(boolean focus) {
         if (focus) {
+
             previousAudioMode = audioManager.getMode();
             // Request audio focus before making any device switch.
             if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
@@ -450,7 +456,7 @@ public class CustomTwilioVideoView extends View implements LifecycleEventListene
              * speaker mode if this is not set.
              */
             audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-            audioManager.setSpeakerphoneOn(!audioManager.isWiredHeadsetOn());
+            audioManager.setSpeakerphoneOn(false);
             getContext().registerReceiver(myNoisyAudioStreamReceiver, intentFilter);
 
         } else {
@@ -461,6 +467,8 @@ public class CustomTwilioVideoView extends View implements LifecycleEventListene
             }
 
             audioManager.setSpeakerphoneOn(false);
+            toggleBluetoothHeadset(true);
+
             audioManager.setMode(previousAudioMode);
             try {
                 if (myNoisyAudioStreamReceiver != null) {
@@ -575,6 +583,8 @@ public class CustomTwilioVideoView extends View implements LifecycleEventListene
         } else {
             audioManager.stopBluetoothSco();
         }
+
+        bluetoothEnabled = enabled;
     }
 
     public void toggleRemoteAudio(boolean enabled) {
