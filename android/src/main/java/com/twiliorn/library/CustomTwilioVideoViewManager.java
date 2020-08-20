@@ -75,7 +75,6 @@ public class CustomTwilioVideoViewManager extends SimpleViewManager<CustomTwilio
                 boolean enableAudio = args.getBoolean(2);
                 boolean enableVideo = args.getBoolean(3);
                 boolean enableRemoteAudio = args.getBoolean(4);
-
                 view.connectToRoomWrapper(roomName, accessToken, enableAudio, enableVideo, enableRemoteAudio);
                 break;
             case DISCONNECT:
