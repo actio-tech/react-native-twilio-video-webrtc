@@ -423,6 +423,7 @@ public class CustomTwilioVideoView extends View implements LifecycleEventListene
             audioSwitch.start((audioDevices, audioDevice) -> {
                 AudioDevice bluetoothHeadset = null;
                 AudioDevice wiredHeadset = null;
+                AudioDevice speakerphone = null;
                 AudioDevice fallback = audioDevices.get(0);
 
                 for (AudioDevice d : audioDevices) {
@@ -433,12 +434,18 @@ public class CustomTwilioVideoView extends View implements LifecycleEventListene
                     if (d instanceof AudioDevice.WiredHeadset) {
                         wiredHeadset = d;
                     }
+
+                    if (d instanceof  AudioDevice.Speakerphone) {
+                        speakerphone = d;
+                    }
                 }
 
                 if (bluetoothHeadset != null) {
                     audioSwitch.selectDevice(bluetoothHeadset);
                 } else if (wiredHeadset != null) {
                     audioSwitch.selectDevice(wiredHeadset);
+                } else if (speakerphone != null) {
+                    audioSwitch.selectDevice(speakerphone);
                 } else {
                     audioSwitch.selectDevice(fallback);
                 }
