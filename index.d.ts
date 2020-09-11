@@ -50,8 +50,8 @@ declare module "react-native-twilio-video-webrtc"{
     participant: Participant;
   };
 
-  type MessageReceivedEventCb = ({ message: string }) => void;
-  type StatsReceivedEventCb = (stats: any) => void;
+  export type MessageReceivedEventCb = ({ message: string }) => void;
+  export type StatsReceivedEventCb = (stats: any) => void;
 
   export type RoomEventCb = (p: RoomEventArgs) => void;
   export type RoomErrorEventCb = (t: RoomErrorEventArgs) => void;
@@ -110,6 +110,7 @@ declare module "react-native-twilio-video-webrtc"{
     flipCamera: () => void;
     toggleSoundSetup: (speaker: boolean) => void;
     getStats: () => void;
+    sendString: (message: string) => void;
   }
 
   class TwilioVideoLocalView extends React.Component<TwilioVideoLocalViewProps> {}
