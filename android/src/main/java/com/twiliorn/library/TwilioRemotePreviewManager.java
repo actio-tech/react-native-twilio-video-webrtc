@@ -7,7 +7,8 @@
 
 package com.twiliorn.library;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
+
 import android.util.Log;
 
 import com.facebook.react.uimanager.SimpleViewManager;
@@ -30,11 +31,11 @@ public class TwilioRemotePreviewManager extends SimpleViewManager<TwilioRemotePr
     @ReactProp(name = "scaleType")
     public void setScaleType(TwilioRemotePreview view, @Nullable String scaleType) {
 
-      if (scaleType.equals("fit")) {
-        view.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
-      } else {
-        view.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL);
-      }
+        if (scaleType.equals("fit")) {
+            view.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
+        } else {
+            view.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL);
+        }
     }
 
     @ReactProp(name = "trackSid")
