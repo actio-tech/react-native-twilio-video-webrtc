@@ -22,6 +22,6 @@ public class TwilioRemotePreview extends RNVideoViewGroup {
         Log.i("CustomTwilioVideoView", trackSid);
 
 
-        CustomTwilioVideoView.registerPrimaryVideoView(this.getSurfaceViewRenderer(), trackSid);
+        TwilioVideoModule.registerPrimaryVideoView(this.getSurfaceViewRenderer(), trackSid);
     }
 }

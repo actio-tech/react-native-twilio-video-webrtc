@@ -10,29 +10,29 @@
 
 #import "RCTTWSerializable.h"
 
-static NSString* roomDidConnect               = @"roomDidConnect";
-static NSString* roomDidDisconnect            = @"roomDidDisconnect";
-static NSString* roomDidFailToConnect         = @"roomDidFailToConnect";
-static NSString* roomParticipantDidConnect    = @"roomParticipantDidConnect";
-static NSString* roomParticipantDidDisconnect = @"roomParticipantDidDisconnect";
+static NSString* roomDidConnect               = @"TwilioVideo.onRoomDidConnect";
+static NSString* roomDidDisconnect            = @"TwilioVideo.onRoomDidDisconnect";
+static NSString* roomDidFailToConnect         = @"TwilioVideo.onRoomDidFailToConnect";
+static NSString* roomParticipantDidConnect    = @"TwilioVideo.onRoomParticipantDidConnect";
+static NSString* roomParticipantDidDisconnect = @"TwilioVideo.onRoomParticipantDidDisconnect";
 
-static NSString* participantAddedVideoTrack   = @"participantAddedVideoTrack";
-static NSString* participantRemovedVideoTrack = @"participantRemovedVideoTrack";
-static NSString* participantAddedDataTrack   = @"participantAddedDataTrack";
-static NSString* participantRemovedDataTrack   = @"participantRemovedDataTrack";
-static NSString* participantAddedAudioTrack   = @"participantAddedAudioTrack";
-static NSString* participantRemovedAudioTrack = @"participantRemovedAudioTrack";
-static NSString* participantEnabledVideoTrack      = @"participantEnabledVideoTrack";
-static NSString* participantDisabledVideoTrack     = @"participantDisabledVideoTrack";
-static NSString* participantEnabledAudioTrack      = @"participantEnabledAudioTrack";
-static NSString* participantDisabledAudioTrack     = @"participantDisabledAudioTrack";
-static NSString* dataTrackMessageReceived     = @"dataTrackMessageReceived";
+static NSString* participantAddedVideoTrack   = @"TwilioVideo.onParticipantAddedVideoTrack";
+static NSString* participantRemovedVideoTrack = @"TwilioVideo.onParticipantRemovedVideoTrack";
+static NSString* participantAddedDataTrack   = @"TwilioVideo.onParticipantAddedDataTrack";
+static NSString* participantRemovedDataTrack   = @"TwilioVideo.onParticipantRemovedDataTrack";
+static NSString* participantAddedAudioTrack   = @"TwilioVideo.onParticipantAddedAudioTrack";
+static NSString* participantRemovedAudioTrack = @"TwilioVideo.onParticipantRemovedAudioTrack";
+static NSString* participantEnabledVideoTrack      = @"TwilioVideo.onParticipantEnabledVideoTrack";
+static NSString* participantDisabledVideoTrack     = @"TwilioVideo.onParticipantDisabledVideoTrack";
+static NSString* participantEnabledAudioTrack      = @"TwilioVideo.onParticipantEnabledAudioTrack";
+static NSString* participantDisabledAudioTrack     = @"TwilioVideo.onParticipantDisabledAudioTrack";
+static NSString* dataTrackMessageReceived     = @"TwilioVideo.onDataTrackMessageReceived";
 
-static NSString* cameraDidStart               = @"cameraDidStart";
-static NSString* cameraWasInterrupted         = @"cameraWasInterrupted";
-static NSString* cameraInterruptionEnded      = @"cameraInterruptionEnded";
-static NSString* cameraDidStopRunning         = @"cameraDidStopRunning";
-static NSString* statsReceived                = @"statsReceived";
+static NSString* cameraDidStart               = @"TwilioVideo.onCameraDidStart";
+static NSString* cameraWasInterrupted         = @"TwilioVideo.onCameraWasInterrupted";
+static NSString* cameraInterruptionEnded      = @"TwilioVideo.onCameraInterruptionEnded";
+static NSString* cameraDidStopRunning         = @"TwilioVideo.onCameraDidStopRunning";
+static NSString* statsReceived                = @"TwilioVideo.onStatsReceived";
 
 static const CMVideoDimensions kRCTTWVideoAppCameraSourceDimensions = (CMVideoDimensions){900, 720};
 
@@ -143,10 +143,6 @@ RCT_EXPORT_MODULE();
        }
      }
   }
-}
-
-RCT_EXPORT_METHOD(changeListenerStatus:(BOOL)value) {
-    self.listening = value;
 }
 
 RCT_EXPORT_METHOD(setRemoteAudioPlayback:(NSString *)participantSid enabled:(BOOL)enabled) {
@@ -339,10 +335,14 @@ RCT_EXPORT_METHOD(getStats) {
   }
 }
 
-RCT_EXPORT_METHOD(connect:(NSString *)accessToken roomName:(NSString *)roomName encodingParameters:(NSDictionary *)encodingParameters) {
-  if (self.localVideoTrack == nil) {
+RCT_EXPORT_METHOD(connect:(NSString *)roomName accessToken:(NSString *)accessToken options:(NSDictionary *)options) {
+  if (options[@"enableVideo"] && self.localVideoTrack == nil) {
     // We disabled video in a previous call, attempt to re-enable
     [self startLocalVideo];
+  }
+    
+  if (options[@"enableAudio"] && self.localAudioTrack == nil) {
+    [self startLocalAudio];
   }
 
   TVIConnectOptions *connectOptions = [TVIConnectOptions optionsWithToken:accessToken block:^(TVIConnectOptionsBuilder * _Nonnull builder) {
@@ -353,7 +353,6 @@ RCT_EXPORT_METHOD(connect:(NSString *)accessToken roomName:(NSString *)roomName 
     if (self.localAudioTrack) {
       builder.audioTracks = @[self.localAudioTrack];
     }
-
 
     self.localDataTrack = [TVILocalDataTrack track];
 
@@ -366,13 +365,13 @@ RCT_EXPORT_METHOD(connect:(NSString *)accessToken roomName:(NSString *)roomName 
     // TODO: provide this via a parameter
     builder.automaticSubscriptionEnabled = false;
     
-    if(encodingParameters[@"enableH264Codec"]){
+    if(options[@"enableH264Codec"]){
       builder.preferredVideoCodecs = @[ [TVIH264Codec new] ];
     }
       
-    if(encodingParameters[@"audioBitrate"] || encodingParameters[@"videoBitrate"]){
-      NSInteger audioBitrate = [encodingParameters[@"audioBitrate"] integerValue];
-      NSInteger videoBitrate = [encodingParameters[@"videoBitrate"] integerValue];
+    if(options[@"audioBitrate"] || options[@"videoBitrate"]){
+      NSInteger audioBitrate = [options[@"audioBitrate"] integerValue];
+      NSInteger videoBitrate = [options[@"videoBitrate"] integerValue];
       builder.encodingParameters = [[TVIEncodingParameters alloc] initWithAudioBitrate:(audioBitrate) ? audioBitrate : 40 videoBitrate:(videoBitrate) ? videoBitrate : 1500];
     }
       
@@ -388,6 +387,9 @@ RCT_EXPORT_METHOD(sendString:(nonnull NSString *)message) {
 }
 
 RCT_EXPORT_METHOD(disconnect) {
+  [self stopLocalAudio];
+  [self stopLocalVideo];
+    
   [self.room disconnect];
 }
 
@@ -397,6 +399,18 @@ RCT_EXPORT_METHOD(disconnect) {
     if (_listening) {
         [self sendEventWithName:event body:body];
     }
+}
+
+# pragma mark - RCTEventEmitter
+
+// Will be called when this module's first listener is added.
+- (void)startObserving {
+  self.listening = YES;
+}
+
+// Will be called when this module's last listener is removed, or on dealloc.
+- (void)stopObserving {
+  self.listening = NO;
 }
 
 # pragma mark - TVICameraSourceDelegate
