@@ -31,11 +31,11 @@
 @implementation RCTConvert(RCTTWVideoTrackIdentifier)
 
 + (RCTTWVideoTrackIdentifier *)RCTTWVideoTrackIdentifier:(id)json {
-  RCTTWVideoTrackIdentifier *trackIdentifier = [[RCTTWVideoTrackIdentifier alloc] init];
-  trackIdentifier.participantSid = json[@"participantSid"];
-  trackIdentifier.videoTrackSid = json[@"videoTrackSid"];
-
-  return trackIdentifier;
+    RCTTWVideoTrackIdentifier *trackIdentifier = [[RCTTWVideoTrackIdentifier alloc] init];
+    trackIdentifier.participantSid = json[@"participantSid"];
+    trackIdentifier.videoTrackSid = json[@"videoTrackSid"];
+    
+    return trackIdentifier;
 }
 
 @end
@@ -48,24 +48,24 @@
 RCT_EXPORT_MODULE()
 
 RCT_CUSTOM_VIEW_PROPERTY(scalesType, NSInteger, TVIVideoView) {
-  view.subviews[0].contentMode = [RCTConvert NSInteger:json];
+    view.subviews[0].contentMode = [RCTConvert NSInteger:json];
 }
 
 - (UIView *)view {
-  UIView *container = [[UIView alloc] init];
-  TVIVideoView *inner = [[TVIVideoView alloc] init];
-  inner.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
-  [container addSubview:inner];
-  return container;
+    UIView *container = [[UIView alloc] init];
+    TVIVideoView *inner = [[TVIVideoView alloc] init];
+    inner.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
+    [container addSubview:inner];
+    return container;
 }
 
 RCT_CUSTOM_VIEW_PROPERTY(trackIdentifier, RCTTWVideoTrackIdentifier, TVIVideoView) {
-  if (json) {
-    RCTTWVideoModule *videoModule = [self.bridge moduleForName:@"TWVideoModule"];
-    RCTTWVideoTrackIdentifier *id = [RCTConvert RCTTWVideoTrackIdentifier:json];
-
-    [videoModule addParticipantView:view.subviews[0] sid:id.participantSid trackSid:id.videoTrackSid];
-  }
+    if (json) {
+        RCTTWVideoModule *videoModule = [self.bridge moduleForName:@"TWVideoModule"];
+        RCTTWVideoTrackIdentifier *id = [RCTConvert RCTTWVideoTrackIdentifier:json];
+        
+        [videoModule addParticipantView:view.subviews[0] sid:id.participantSid trackSid:id.videoTrackSid];
+    }
 }
 
 
