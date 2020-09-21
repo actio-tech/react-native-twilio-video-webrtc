@@ -46,7 +46,6 @@ class TwilioVideo {
       enableAudio: options.enableAudio ?? true,
       enableVideo: options.enableVideo ?? true,
     });
-    // TODO: start local video/audio on iOS
   };
 
   /**
@@ -54,8 +53,6 @@ class TwilioVideo {
    */
   disconnect = () => {
     this.nativeModule.disconnect();
-
-    // TODO: stop local video/audio on iOS
   };
 
   /**1
