@@ -59,13 +59,51 @@ declare module 'react-native-twilio-video-webrtc' {
   export type ParticipantEventCb = (p: ParticipantEventArgs) => void;
 
   interface TwilioVideo {
-    setLocalVideoEnabled: (enabled: boolean) => Promise<boolean>;
-    setLocalAudioEnabled: (enabled: boolean) => Promise<boolean>;
-    connect: (options: iOSConnectParams | androidConnectParams) => void;
+    connect: (
+      roomName: string,
+      accessToken: string,
+      options: iOSConnectParams | androidConnectParams,
+    ) => void;
+
     disconnect: () => void;
+
     flipCamera: () => void;
+
     getStats: () => void;
+
     sendString: (message: string) => void;
+
+    setLocalVideoEnabled: (enabled: boolean) => Promise<boolean>;
+
+    setLocalAudioEnabled: (enabled: boolean) => Promise<boolean>;
+
+    onRoomDidConnect: RoomEventCb;
+
+    onRoomDidDisconnect: RoomErrorEventCb;
+
+    onRoomDidFailToConnect: RoomErrorEventCb;
+
+    onRoomParticipantDidConnect: ParticipantEventCb;
+
+    onRoomParticipantDidDisconnect: ParticipantEventCb;
+
+    onParticipantAddedVideoTrack: TrackEventCb;
+
+    onParticipantAddedDataTrack: TrackEventCb;
+
+    onParticipantRemovedDataTrack: TrackEventCb;
+
+    onParticipantRemovedVideoTrack: TrackEventCb;
+
+    onParticipantAddedAudioTrack: TrackEventCb;
+
+    onParticipantRemovedAudioTrack: TrackEventCb;
+
+    onParticipantRemovedDataTrack: TrackEventCb;
+
+    onDataTrackMessageReceived: MessageReceivedEventCb;
+
+    onStatsReceived: StatsReceivedEventCb;
   }
 
   type TwilioVideoViewProps = ViewProps & {
@@ -127,5 +165,10 @@ declare module 'react-native-twilio-video-webrtc' {
     TwilioVideoParticipantViewProps
   > {}
 
-  export { TwilioVideoLocalView, TwilioVideoParticipantView, TwilioVideo, TwilioVideoView };
+  export {
+    TwilioVideoLocalView,
+    TwilioVideoParticipantView,
+    TwilioVideo,
+    TwilioVideoView,
+  };
 }
