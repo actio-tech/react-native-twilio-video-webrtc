@@ -145,7 +145,7 @@ RCT_EXPORT_MODULE();
     }
 }
 
-RCT_EXPORT_METHOD(setRemoteAudioPlayback:(NSString *)participantSid enabled:(BOOL)enabled) {
+RCT_EXPORT_METHOD(setRemoteAudioEnabled:(NSString *)participantSid enabled:(BOOL)enabled) {
     TVIRemoteParticipant *participant = [self.room getRemoteParticipantWithSid:participantSid];
     if (participant) {
         NSArray<TVIRemoteAudioTrackPublication *> *trackPublications = participant.remoteAudioTracks;

@@ -575,18 +575,19 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void setRemoteAudioEnabled(boolean enabled) {
+    public void setRemoteAudioEnabled(String participantSid, boolean enabled) {
         if (room != null) {
             for (RemoteParticipant rp : room.getRemoteParticipants()) {
-                for (AudioTrackPublication at : rp.getAudioTracks()) {
-                    if (at.getAudioTrack() != null) {
-                        ((RemoteAudioTrack) at.getAudioTrack()).enablePlayback(enabled);
+                if (rp.getSid().equals(participantSid)) {
+                    for (AudioTrackPublication at : rp.getAudioTracks()) {
+                        if (at.getAudioTrack() != null) {
+                            ((RemoteAudioTrack) at.getAudioTrack()).enablePlayback(enabled);
+                        }
                     }
                 }
             }
         }
     }
-
 
     private void convertBaseTrackStats(BaseTrackStats bs, WritableMap result) {
         result.putString("codec", bs.codec);
