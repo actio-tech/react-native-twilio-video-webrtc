@@ -467,7 +467,7 @@ RCT_EXPORT_METHOD(disconnect) {
     NSMutableDictionary *body = [@{ @"roomName": room.name, @"roomSid": room.sid } mutableCopy];
     
     if (error) {
-        [body addEntriesFromDictionary:@{ @"error" : error.localizedDescription }];
+        [body addEntriesFromDictionary:@{ @"error" : @{ @"message": error.localizedDescription, @"code": @(error.code) } }];
     }
     [self sendEventCheckingListenerWithName:roomDidDisconnect body:body];
 }
@@ -478,7 +478,7 @@ RCT_EXPORT_METHOD(disconnect) {
     NSMutableDictionary *body = [@{ @"roomName": room.name, @"roomSid": room.sid } mutableCopy];
     
     if (error) {
-        [body addEntriesFromDictionary:@{ @"error" : error.localizedDescription }];
+        [body addEntriesFromDictionary:@{ @"error" : @{ @"message": error.localizedDescription, @"code": @(error.code) } }];
     }
     
     [self sendEventCheckingListenerWithName:roomDidFailToConnect body:body];

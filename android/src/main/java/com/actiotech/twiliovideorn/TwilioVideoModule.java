@@ -733,7 +733,11 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
                 WritableMap event = new WritableNativeMap();
                 event.putString("roomName", room.getName());
                 event.putString("roomSid", room.getSid());
-                event.putString("error", e.getMessage());
+
+                WritableMap error = new WritableNativeMap();
+                error.putString("message", e.getMessage());
+                error.putInt("code", e.getCode());
+                event.putMap("error", error);
                 pushEvent(ON_CONNECT_FAILURE, event);
             }
 
@@ -757,7 +761,10 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
                 event.putString("roomName", room.getName());
                 event.putString("roomSid", room.getSid());
                 if (e != null) {
-                    event.putString("error", e.getMessage());
+                    WritableMap error = new WritableNativeMap();
+                    error.putString("message", e.getMessage());
+                    error.putInt("code", e.getCode());
+                    event.putMap("error", error);
                 }
                 pushEvent(ON_DISCONNECTED, event);
 
