@@ -145,6 +145,8 @@ declare module 'react-native-twilio-video-webrtc' {
 
     setLocalAudioEnabled: (enabled: boolean) => Promise<boolean>;
 
+    setRemoteAudioEnabled: (participantSid: string, enabled: boolean) => void;
+
     onRoomDidConnect: RoomEventCb;
 
     onRoomDidDisconnect: RoomErrorEventCb;
@@ -218,6 +220,7 @@ declare module 'react-native-twilio-video-webrtc' {
   class TwilioVideoView extends React.Component<TwilioVideoViewProps> {
     setLocalVideoEnabled: (enabled: boolean) => Promise<boolean>;
     setLocalAudioEnabled: (enabled: boolean) => Promise<boolean>;
+    setRemoteAudioEnabled: (participantSid: string, enabled: boolean) => void;
     setBluetoothHeadsetConnected: (enabled: boolean) => Promise<boolean>;
     connect: (options: iOSConnectParams | androidConnectParams) => void;
     disconnect: () => void;

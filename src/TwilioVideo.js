@@ -141,6 +141,15 @@ class TwilioVideo {
   };
 
   /**
+   * Enable/disable remove audio for specific participant
+   * @param participantSid
+   * @param enabled
+   */
+  setRemoteAudioEnabled = (participantSid, enabled) => {
+    this.nativeModule.setRemoteAudioEnabled(participantSid, enabled);
+  };
+
+  /**
    * Flip between the front and back camera
    */
   flipCamera = () => {
