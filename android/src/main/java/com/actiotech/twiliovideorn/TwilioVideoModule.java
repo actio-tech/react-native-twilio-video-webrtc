@@ -397,7 +397,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         // Share your microphone
         localAudioTrack = LocalAudioTrack.create(getContext(), enableAudio);
 
-        if (cameraCapturer == null) {
+        if (enableVideo && cameraCapturer == null) {
             boolean createVideoStatus = createLocalVideo(enableVideo);
             if (!createVideoStatus) {
                 // No need to connect to room if video creation failed
