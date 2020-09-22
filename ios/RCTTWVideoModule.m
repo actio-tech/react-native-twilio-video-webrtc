@@ -10,29 +10,29 @@
 
 #import "RCTTWSerializable.h"
 
-static NSString* roomDidConnect               = @"roomDidConnect";
-static NSString* roomDidDisconnect            = @"roomDidDisconnect";
-static NSString* roomDidFailToConnect         = @"roomDidFailToConnect";
-static NSString* roomParticipantDidConnect    = @"roomParticipantDidConnect";
-static NSString* roomParticipantDidDisconnect = @"roomParticipantDidDisconnect";
+static NSString* roomDidConnect               = @"TwilioVideo.onRoomDidConnect";
+static NSString* roomDidDisconnect            = @"TwilioVideo.onRoomDidDisconnect";
+static NSString* roomDidFailToConnect         = @"TwilioVideo.onRoomDidFailToConnect";
+static NSString* roomParticipantDidConnect    = @"TwilioVideo.onRoomParticipantDidConnect";
+static NSString* roomParticipantDidDisconnect = @"TwilioVideo.onRoomParticipantDidDisconnect";
 
-static NSString* participantAddedVideoTrack   = @"participantAddedVideoTrack";
-static NSString* participantRemovedVideoTrack = @"participantRemovedVideoTrack";
-static NSString* participantAddedDataTrack   = @"participantAddedDataTrack";
-static NSString* participantRemovedDataTrack   = @"participantRemovedDataTrack";
-static NSString* participantAddedAudioTrack   = @"participantAddedAudioTrack";
-static NSString* participantRemovedAudioTrack = @"participantRemovedAudioTrack";
-static NSString* participantEnabledVideoTrack      = @"participantEnabledVideoTrack";
-static NSString* participantDisabledVideoTrack     = @"participantDisabledVideoTrack";
-static NSString* participantEnabledAudioTrack      = @"participantEnabledAudioTrack";
-static NSString* participantDisabledAudioTrack     = @"participantDisabledAudioTrack";
-static NSString* dataTrackMessageReceived     = @"dataTrackMessageReceived";
+static NSString* participantAddedVideoTrack   = @"TwilioVideo.onParticipantAddedVideoTrack";
+static NSString* participantRemovedVideoTrack = @"TwilioVideo.onParticipantRemovedVideoTrack";
+static NSString* participantAddedDataTrack   = @"TwilioVideo.onParticipantAddedDataTrack";
+static NSString* participantRemovedDataTrack   = @"TwilioVideo.onParticipantRemovedDataTrack";
+static NSString* participantAddedAudioTrack   = @"TwilioVideo.onParticipantAddedAudioTrack";
+static NSString* participantRemovedAudioTrack = @"TwilioVideo.onParticipantRemovedAudioTrack";
+static NSString* participantEnabledVideoTrack      = @"TwilioVideo.onParticipantEnabledVideoTrack";
+static NSString* participantDisabledVideoTrack     = @"TwilioVideo.onParticipantDisabledVideoTrack";
+static NSString* participantEnabledAudioTrack      = @"TwilioVideo.onParticipantEnabledAudioTrack";
+static NSString* participantDisabledAudioTrack     = @"TwilioVideo.onParticipantDisabledAudioTrack";
+static NSString* dataTrackMessageReceived     = @"TwilioVideo.onDataTrackMessageReceived";
 
-static NSString* cameraDidStart               = @"cameraDidStart";
-static NSString* cameraWasInterrupted         = @"cameraWasInterrupted";
-static NSString* cameraInterruptionEnded      = @"cameraInterruptionEnded";
-static NSString* cameraDidStopRunning         = @"cameraDidStopRunning";
-static NSString* statsReceived                = @"statsReceived";
+static NSString* cameraDidStart               = @"TwilioVideo.onCameraDidStart";
+static NSString* cameraWasInterrupted         = @"TwilioVideo.onCameraWasInterrupted";
+static NSString* cameraInterruptionEnded      = @"TwilioVideo.onCameraInterruptionEnded";
+static NSString* cameraDidStopRunning         = @"TwilioVideo.onCameraDidStopRunning";
+static NSString* statsReceived                = @"TwilioVideo.onStatsReceived";
 
 static const CMVideoDimensions kRCTTWVideoAppCameraSourceDimensions = (CMVideoDimensions){900, 720};
 
@@ -42,7 +42,7 @@ TVIVideoFormat *RCTTWVideoModuleCameraSourceSelectVideoFormatBySize(AVCaptureDev
     TVIVideoFormat *selectedFormat = nil;
     // Ordered from smallest to largest.
     NSOrderedSet<TVIVideoFormat *> *formats = [TVICameraSource supportedFormatsForDevice:device];
-
+    
     for (TVIVideoFormat *format in formats) {
         if (format.pixelFormat != TVIPixelFormatYUV420BiPlanarFullRange) {
             continue;
@@ -50,7 +50,7 @@ TVIVideoFormat *RCTTWVideoModuleCameraSourceSelectVideoFormatBySize(AVCaptureDev
         selectedFormat = format;
         // ^ Select whatever is available until we find one we like and short-circuit
         CMVideoDimensions dimensions = format.dimensions;
-
+        
         if (dimensions.width >= targetSize.width && dimensions.height >= targetSize.height) {
             break;
         }
@@ -77,76 +77,72 @@ TVIVideoFormat *RCTTWVideoModuleCameraSourceSelectVideoFormatBySize(AVCaptureDev
 RCT_EXPORT_MODULE();
 
 - (void)dealloc {
-  // We are done with camera
-  if (self.camera) {
-      [self.camera stopCapture];
-      self.camera = nil;
-  }
+    // We are done with camera
+    if (self.camera) {
+        [self.camera stopCapture];
+        self.camera = nil;
+    }
 }
 
 - (dispatch_queue_t)methodQueue {
-  return dispatch_get_main_queue();
+    return dispatch_get_main_queue();
 }
 
 - (NSArray<NSString *> *)supportedEvents {
-  return @[
-    roomDidConnect,
-    roomDidDisconnect,
-    roomDidFailToConnect,
-    roomParticipantDidConnect,
-    roomParticipantDidDisconnect,
-    participantAddedVideoTrack,
-    participantRemovedVideoTrack,
-    participantAddedDataTrack,
-    participantRemovedDataTrack,
-    participantAddedAudioTrack,
-    participantRemovedAudioTrack,
-    participantEnabledVideoTrack,
-    participantDisabledVideoTrack,
-    participantEnabledAudioTrack,
-    participantDisabledAudioTrack,
-    dataTrackMessageReceived,
-    cameraDidStopRunning,
-    cameraDidStart,
-    cameraWasInterrupted,
-    cameraInterruptionEnded,
-    statsReceived
-  ];
+    return @[
+        roomDidConnect,
+        roomDidDisconnect,
+        roomDidFailToConnect,
+        roomParticipantDidConnect,
+        roomParticipantDidDisconnect,
+        participantAddedVideoTrack,
+        participantRemovedVideoTrack,
+        participantAddedDataTrack,
+        participantRemovedDataTrack,
+        participantAddedAudioTrack,
+        participantRemovedAudioTrack,
+        participantEnabledVideoTrack,
+        participantDisabledVideoTrack,
+        participantEnabledAudioTrack,
+        participantDisabledAudioTrack,
+        dataTrackMessageReceived,
+        cameraDidStopRunning,
+        cameraDidStart,
+        cameraWasInterrupted,
+        cameraInterruptionEnded,
+        statsReceived
+    ];
 }
 
 - (void)addLocalView:(TVIVideoView *)view {
-  [self.localVideoTrack addRenderer:view];
-  [self updateLocalViewMirroring:view];
+    [self.localVideoTrack addRenderer:view];
+    [self updateLocalViewMirroring:view];
 }
 
 - (void)updateLocalViewMirroring:(TVIVideoView *)view {
-  if (self.camera && self.camera.device.position == AVCaptureDevicePositionFront) {
-    view.mirror = true;
-  }
+    if (self.camera && self.camera.device.position == AVCaptureDevicePositionFront) {
+        view.mirror = true;
+    }
 }
 
 - (void)removeLocalView:(TVIVideoView *)view {
-  [self.localVideoTrack removeRenderer:view];
+    [self.localVideoTrack removeRenderer:view];
 }
 
 - (void)removeParticipantView:(TVIVideoView *)view sid:(NSString *)sid trackSid:(NSString *)trackSid {
-  // TODO: Implement this nicely
+    // TODO: Implement this nicely
 }
 
 - (void)addParticipantView:(TVIVideoView *)view sid:(NSString *)sid trackSid:(NSString *)trackSid {
-  // Lookup for the participant in the room
-  TVIRemoteParticipant *participant = [self.room getRemoteParticipantWithSid:sid];
-  if (participant) {
-     for (TVIRemoteVideoTrackPublication *publication in participant.remoteVideoTracks) {
-       if ([publication.trackSid isEqualToString:trackSid]) {
-         [publication.videoTrack addRenderer:view];
-       }
-     }
-  }
-}
-
-RCT_EXPORT_METHOD(changeListenerStatus:(BOOL)value) {
-    self.listening = value;
+    // Lookup for the participant in the room
+    TVIRemoteParticipant *participant = [self.room getRemoteParticipantWithSid:sid];
+    if (participant) {
+        for (TVIRemoteVideoTrackPublication *publication in participant.remoteVideoTracks) {
+            if ([publication.trackSid isEqualToString:trackSid]) {
+                [publication.videoTrack addRenderer:view];
+            }
+        }
+    }
 }
 
 RCT_EXPORT_METHOD(setRemoteAudioPlayback:(NSString *)participantSid enabled:(BOOL)enabled) {
@@ -160,25 +156,25 @@ RCT_EXPORT_METHOD(setRemoteAudioPlayback:(NSString *)participantSid enabled:(BOO
 }
 
 RCT_EXPORT_METHOD(startLocalVideo) {
-  TVICameraSourceOptions *options = [TVICameraSourceOptions optionsWithBlock:^(TVICameraSourceOptionsBuilder * _Nonnull builder) {
-
-  }];
-  self.camera = [[TVICameraSource alloc] initWithOptions:options delegate:self];
-  if (self.camera == nil) {
-      return;
-  }
-  self.localVideoTrack = [TVILocalVideoTrack trackWithSource:self.camera enabled:YES name:@"camera"];
-  AVCaptureDevice *camera = [TVICameraSource captureDeviceForPosition:AVCaptureDevicePositionFront];
-  [self.camera startCaptureWithDevice:camera completion:^(AVCaptureDevice *device,
-          TVIVideoFormat *startFormat,
-          NSError *error) {
-      if (!error) {
-          for (TVIVideoView *renderer in self.localVideoTrack.renderers) {
-            [self updateLocalViewMirroring:renderer];
-          }
-          [self sendEventCheckingListenerWithName:cameraDidStart body:nil];
-      }
-  }];
+    TVICameraSourceOptions *options = [TVICameraSourceOptions optionsWithBlock:^(TVICameraSourceOptionsBuilder * _Nonnull builder) {
+        
+    }];
+    self.camera = [[TVICameraSource alloc] initWithOptions:options delegate:self];
+    if (self.camera == nil) {
+        return;
+    }
+    self.localVideoTrack = [TVILocalVideoTrack trackWithSource:self.camera enabled:YES name:@"camera"];
+    AVCaptureDevice *camera = [TVICameraSource captureDeviceForPosition:AVCaptureDevicePositionFront];
+    [self.camera startCaptureWithDevice:camera completion:^(AVCaptureDevice *device,
+                                                            TVIVideoFormat *startFormat,
+                                                            NSError *error) {
+        if (!error) {
+            for (TVIVideoView *renderer in self.localVideoTrack.renderers) {
+                [self updateLocalViewMirroring:renderer];
+            }
+            [self sendEventCheckingListenerWithName:cameraDidStart body:nil];
+        }
+    }];
 }
 
 RCT_EXPORT_METHOD(startLocalAudio) {
@@ -186,27 +182,27 @@ RCT_EXPORT_METHOD(startLocalAudio) {
 }
 
 RCT_EXPORT_METHOD(stopLocalVideo) {
-  self.localVideoTrack = nil;
-  self.camera = nil;
+    self.localVideoTrack = nil;
+    self.camera = nil;
 }
 
 RCT_EXPORT_METHOD(stopLocalAudio) {
-  self.localAudioTrack = nil;
+    self.localAudioTrack = nil;
 }
 
 RCT_REMAP_METHOD(setLocalAudioEnabled, enabled:(BOOL)enabled setLocalAudioEnabledWithResolver:(RCTPromiseResolveBlock)resolve
-    rejecter:(RCTPromiseRejectBlock)reject) {
-  [self.localAudioTrack setEnabled:enabled];
-
-  resolve(@(enabled));
+                 rejecter:(RCTPromiseRejectBlock)reject) {
+    [self.localAudioTrack setEnabled:enabled];
+    
+    resolve(@(enabled));
 }
 
 RCT_REMAP_METHOD(setLocalVideoEnabled, enabled:(BOOL)enabled setLocalVideoEnabledWithResolver:(RCTPromiseResolveBlock)resolve
                  rejecter:(RCTPromiseRejectBlock)reject) {
-  if (self.localVideoTrack != nil) {
-    [self.localVideoTrack setEnabled:enabled];
-    resolve(@(enabled));
-  }
+    if (self.localVideoTrack != nil) {
+        [self.localVideoTrack setEnabled:enabled];
+        resolve(@(enabled));
+    }
 }
 
 
@@ -215,170 +211,173 @@ RCT_EXPORT_METHOD(flipCamera) {
         AVCaptureDevicePosition position = self.camera.device.position;
         AVCaptureDevicePosition nextPosition = position == AVCaptureDevicePositionFront ? AVCaptureDevicePositionBack : AVCaptureDevicePositionFront;
         BOOL mirror = nextPosition == AVCaptureDevicePositionFront;
-
+        
         AVCaptureDevice *captureDevice = [TVICameraSource captureDeviceForPosition:nextPosition];
         [self.camera selectCaptureDevice:captureDevice completion:^(AVCaptureDevice *device,
-                TVIVideoFormat *startFormat,
-                NSError *error) {
+                                                                    TVIVideoFormat *startFormat,
+                                                                    NSError *error) {
             if (!error) {
                 for (TVIVideoView *renderer in self.localVideoTrack.renderers) {
                     renderer.mirror = mirror;
                 }
             }
         }];
-  }
+    }
 }
 
 RCT_EXPORT_METHOD(toggleSoundSetup:(BOOL)speaker) {
-  NSError *error = nil;
-  kTVIDefaultAVAudioSessionConfigurationBlock();
-  AVAudioSession *session = [AVAudioSession sharedInstance];
-  AVAudioSessionMode mode = speaker ? AVAudioSessionModeVideoChat : AVAudioSessionModeVoiceChat ;
-  // Overwrite the audio route
-  if (![session setMode:mode error:&error]) {
-    NSLog(@"AVAudiosession setMode %@",error);
-  }
-
-  if (![session overrideOutputAudioPort:AVAudioSessionPortOverrideNone error:&error]) {
-    NSLog(@"AVAudiosession overrideOutputAudioPort %@",error);
-  }
+    NSError *error = nil;
+    kTVIDefaultAVAudioSessionConfigurationBlock();
+    AVAudioSession *session = [AVAudioSession sharedInstance];
+    AVAudioSessionMode mode = speaker ? AVAudioSessionModeVideoChat : AVAudioSessionModeVoiceChat ;
+    // Overwrite the audio route
+    if (![session setMode:mode error:&error]) {
+        NSLog(@"AVAudiosession setMode %@",error);
+    }
+    
+    if (![session overrideOutputAudioPort:AVAudioSessionPortOverrideNone error:&error]) {
+        NSLog(@"AVAudiosession overrideOutputAudioPort %@",error);
+    }
 }
 
 -(void)convertBaseTrackStats:(TVIBaseTrackStats *)stats result:(NSMutableDictionary *)result {
-  result[@"trackSid"] = stats.trackSid;
-  result[@"packetsLost"] = @(stats.packetsLost);
-  result[@"codec"] = stats.codec;
-  result[@"ssrc"] = stats.ssrc;
-  result[@"timestamp"] = @(stats.timestamp);
+    result[@"trackSid"] = stats.trackSid;
+    result[@"packetsLost"] = @(stats.packetsLost);
+    result[@"codec"] = stats.codec;
+    result[@"ssrc"] = stats.ssrc;
+    result[@"timestamp"] = @(stats.timestamp);
 }
 
 -(void)convertRemoteTrackStats:(TVIRemoteTrackStats *)stats result:(NSMutableDictionary *)result {
-  result[@"bytesReceived"] = @(stats.bytesReceived);
-  result[@"packetsReceived"] = @(stats.packetsReceived);
+    result[@"bytesReceived"] = @(stats.bytesReceived);
+    result[@"packetsReceived"] = @(stats.packetsReceived);
 }
 
 -(void)convertLocalTrackStats:(TVILocalTrackStats *)stats result:(NSMutableDictionary *)result {
-  result[@"bytesSent"] = @(stats.bytesSent);
-  result[@"packetsSent"] = @(stats.packetsSent);
-  result[@"roundTripTime"] = @(stats.roundTripTime);
+    result[@"bytesSent"] = @(stats.bytesSent);
+    result[@"packetsSent"] = @(stats.packetsSent);
+    result[@"roundTripTime"] = @(stats.roundTripTime);
 }
 
 -(NSMutableDictionary*)convertDimensions:(CMVideoDimensions)dimensions {
-  NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:2];
-  result[@"width"] = @(dimensions.width);
-  result[@"height"] = @(dimensions.height);
-  return result;
+    NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:2];
+    result[@"width"] = @(dimensions.width);
+    result[@"height"] = @(dimensions.height);
+    return result;
 }
 
 -(NSMutableDictionary*)convertRemoteAudioTrackStats:(TVIRemoteAudioTrackStats *)stats {
-  NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:10];
-  [self convertBaseTrackStats:stats result:result];
-  [self convertRemoteTrackStats:stats result:result];
-  result[@"audioLevel"] = @(stats.audioLevel);
-  result[@"jitter"] = @(stats.jitter);
-  return result;
+    NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:10];
+    [self convertBaseTrackStats:stats result:result];
+    [self convertRemoteTrackStats:stats result:result];
+    result[@"audioLevel"] = @(stats.audioLevel);
+    result[@"jitter"] = @(stats.jitter);
+    return result;
 }
 
 -(NSMutableDictionary*)convertRemoteVideoTrackStats:(TVIRemoteVideoTrackStats *)stats {
-  NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:10];
-  [self convertBaseTrackStats:stats result:result];
-  [self convertRemoteTrackStats:stats result:result];
-  result[@"dimensions"] = [self convertDimensions:stats.dimensions];
-  result[@"frameRate"] = @(stats.frameRate);
-  return result;
+    NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:10];
+    [self convertBaseTrackStats:stats result:result];
+    [self convertRemoteTrackStats:stats result:result];
+    result[@"dimensions"] = [self convertDimensions:stats.dimensions];
+    result[@"frameRate"] = @(stats.frameRate);
+    return result;
 }
 
 -(NSMutableDictionary*)convertLocalAudioTrackStats:(TVILocalAudioTrackStats *)stats {
-  NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:10];
-  [self convertBaseTrackStats:stats result:result];
-  [self convertLocalTrackStats:stats result:result];
-  result[@"audioLevel"] = @(stats.audioLevel);
-  result[@"jitter"] = @(stats.jitter);
-  return result;
+    NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:10];
+    [self convertBaseTrackStats:stats result:result];
+    [self convertLocalTrackStats:stats result:result];
+    result[@"audioLevel"] = @(stats.audioLevel);
+    result[@"jitter"] = @(stats.jitter);
+    return result;
 }
 
 -(NSMutableDictionary*)convertLocalVideoTrackStats:(TVILocalVideoTrackStats *)stats {
-  NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:10];
-  [self convertBaseTrackStats:stats result:result];
-  [self convertLocalTrackStats:stats result:result];
-  result[@"dimensions"] = [self convertDimensions:stats.dimensions];
-  result[@"frameRate"] = @(stats.frameRate);
-  return result;
+    NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:10];
+    [self convertBaseTrackStats:stats result:result];
+    [self convertLocalTrackStats:stats result:result];
+    result[@"dimensions"] = [self convertDimensions:stats.dimensions];
+    result[@"frameRate"] = @(stats.frameRate);
+    return result;
 }
 
 RCT_EXPORT_METHOD(getStats) {
-  if (self.room) {
-    [self.room getStatsWithBlock:^(NSArray<TVIStatsReport *> * _Nonnull statsReports) {
-      NSMutableDictionary *eventBody = [[NSMutableDictionary alloc] initWithCapacity:10];
-      for (TVIStatsReport *statsReport in statsReports) {
-        NSMutableArray *audioTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
-        NSMutableArray *videoTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
-        NSMutableArray *localAudioTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
-        NSMutableArray *localVideoTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
-        for (TVIRemoteAudioTrackStats *stats in statsReport.remoteAudioTrackStats) {
-          [audioTrackStats addObject:[self convertRemoteAudioTrackStats:stats]];
-        }
-        for (TVIRemoteVideoTrackStats *stats in statsReport.remoteVideoTrackStats) {
-          [videoTrackStats addObject:[self convertRemoteVideoTrackStats:stats]];
-        }
-        for (TVILocalAudioTrackStats *stats in statsReport.localAudioTrackStats) {
-          [localAudioTrackStats addObject:[self convertLocalAudioTrackStats:stats]];
-        }
-        for (TVILocalVideoTrackStats *stats in statsReport.localVideoTrackStats) {
-          [localVideoTrackStats addObject:[self convertLocalVideoTrackStats:stats]];
-        }
-        eventBody[statsReport.peerConnectionId] = @{
-          @"remoteAudioTrackStats": audioTrackStats,
-          @"remoteVideoTrackStats": videoTrackStats,
-          @"localAudioTrackStats": localAudioTrackStats,
-          @"localVideoTrackStats": localVideoTrackStats
-        };
-      }
-      [self sendEventCheckingListenerWithName:statsReceived body:eventBody];
-    }];
-  }
+    if (self.room) {
+        [self.room getStatsWithBlock:^(NSArray<TVIStatsReport *> * _Nonnull statsReports) {
+            NSMutableDictionary *eventBody = [[NSMutableDictionary alloc] initWithCapacity:10];
+            for (TVIStatsReport *statsReport in statsReports) {
+                NSMutableArray *audioTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
+                NSMutableArray *videoTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
+                NSMutableArray *localAudioTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
+                NSMutableArray *localVideoTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
+                for (TVIRemoteAudioTrackStats *stats in statsReport.remoteAudioTrackStats) {
+                    [audioTrackStats addObject:[self convertRemoteAudioTrackStats:stats]];
+                }
+                for (TVIRemoteVideoTrackStats *stats in statsReport.remoteVideoTrackStats) {
+                    [videoTrackStats addObject:[self convertRemoteVideoTrackStats:stats]];
+                }
+                for (TVILocalAudioTrackStats *stats in statsReport.localAudioTrackStats) {
+                    [localAudioTrackStats addObject:[self convertLocalAudioTrackStats:stats]];
+                }
+                for (TVILocalVideoTrackStats *stats in statsReport.localVideoTrackStats) {
+                    [localVideoTrackStats addObject:[self convertLocalVideoTrackStats:stats]];
+                }
+                eventBody[statsReport.peerConnectionId] = @{
+                    @"remoteAudioTrackStats": audioTrackStats,
+                    @"remoteVideoTrackStats": videoTrackStats,
+                    @"localAudioTrackStats": localAudioTrackStats,
+                    @"localVideoTrackStats": localVideoTrackStats
+                };
+            }
+            [self sendEventCheckingListenerWithName:statsReceived body:eventBody];
+        }];
+    }
 }
 
-RCT_EXPORT_METHOD(connect:(NSString *)accessToken roomName:(NSString *)roomName encodingParameters:(NSDictionary *)encodingParameters) {
-  if (self.localVideoTrack == nil) {
-    // We disabled video in a previous call, attempt to re-enable
-    [self startLocalVideo];
-  }
-
-  TVIConnectOptions *connectOptions = [TVIConnectOptions optionsWithToken:accessToken block:^(TVIConnectOptionsBuilder * _Nonnull builder) {
-    if (self.localVideoTrack) {
-      builder.videoTracks = @[self.localVideoTrack];
+RCT_EXPORT_METHOD(connect:(NSString *)roomName accessToken:(NSString *)accessToken options:(NSDictionary *)options) {
+    if (options[@"enableVideo"] && self.localVideoTrack == nil) {
+        // We disabled video in a previous call, attempt to re-enable
+        [self startLocalVideo];
     }
-
-    if (self.localAudioTrack) {
-      builder.audioTracks = @[self.localAudioTrack];
-    }
-
-
-    self.localDataTrack = [TVILocalDataTrack track];
-
-    if (self.localDataTrack) {
-      builder.dataTracks = @[self.localDataTrack];
-    }
-
-    builder.roomName = roomName;
-
-    // TODO: provide this via a parameter
-    builder.automaticSubscriptionEnabled = false;
     
-    if(encodingParameters[@"enableH264Codec"]){
-      builder.preferredVideoCodecs = @[ [TVIH264Codec new] ];
+    if (options[@"enableAudio"] && self.localAudioTrack == nil) {
+        [self startLocalAudio];
     }
-      
-    if(encodingParameters[@"audioBitrate"] || encodingParameters[@"videoBitrate"]){
-      NSInteger audioBitrate = [encodingParameters[@"audioBitrate"] integerValue];
-      NSInteger videoBitrate = [encodingParameters[@"videoBitrate"] integerValue];
-      builder.encodingParameters = [[TVIEncodingParameters alloc] initWithAudioBitrate:(audioBitrate) ? audioBitrate : 40 videoBitrate:(videoBitrate) ? videoBitrate : 1500];
-    }
-      
-  }];
-
-  self.room = [TwilioVideoSDK connectWithOptions:connectOptions delegate:self];
+    
+    TVIConnectOptions *connectOptions = [TVIConnectOptions optionsWithToken:accessToken block:^(TVIConnectOptionsBuilder * _Nonnull builder) {
+        if (self.localVideoTrack) {
+            builder.videoTracks = @[self.localVideoTrack];
+        }
+        
+        if (self.localAudioTrack) {
+            builder.audioTracks = @[self.localAudioTrack];
+        }
+        
+        self.localDataTrack = [TVILocalDataTrack track];
+        
+        if (self.localDataTrack) {
+            builder.dataTracks = @[self.localDataTrack];
+        }
+        
+        builder.roomName = roomName;
+        
+        // TODO: provide this via a parameter
+        builder.automaticSubscriptionEnabled = false;
+        
+        if(options[@"enableH264Codec"]){
+            builder.preferredVideoCodecs = @[ [TVIH264Codec new] ];
+        }
+        
+        if(options[@"audioBitrate"] || options[@"videoBitrate"]){
+            NSInteger audioBitrate = [options[@"audioBitrate"] integerValue];
+            NSInteger videoBitrate = [options[@"videoBitrate"] integerValue];
+            builder.encodingParameters = [[TVIEncodingParameters alloc] initWithAudioBitrate:(audioBitrate) ? audioBitrate : 40 videoBitrate:(videoBitrate) ? videoBitrate : 1500];
+        }
+        
+    }];
+    
+    self.room = [TwilioVideoSDK connectWithOptions:connectOptions delegate:self];
 }
 
 RCT_EXPORT_METHOD(sendString:(nonnull NSString *)message) {
@@ -388,7 +387,10 @@ RCT_EXPORT_METHOD(sendString:(nonnull NSString *)message) {
 }
 
 RCT_EXPORT_METHOD(disconnect) {
-  [self.room disconnect];
+    [self stopLocalAudio];
+    [self stopLocalVideo];
+    
+    [self.room disconnect];
 }
 
 # pragma mark - Common
@@ -397,6 +399,18 @@ RCT_EXPORT_METHOD(disconnect) {
     if (_listening) {
         [self sendEventWithName:event body:body];
     }
+}
+
+# pragma mark - RCTEventEmitter
+
+// Will be called when this module's first listener is added.
+- (void)startObserving {
+    self.listening = YES;
+}
+
+// Will be called when this module's last listener is removed, or on dealloc.
+- (void)stopObserving {
+    self.listening = NO;
 }
 
 # pragma mark - TVICameraSourceDelegate
@@ -420,7 +434,7 @@ RCT_EXPORT_METHOD(disconnect) {
             reasonStr = @"video device not available due to system pressure";
         }
     }
-
+    
     [self sendEventCheckingListenerWithName:cameraWasInterrupted body:@{@"reason" : reasonStr }];
 }
 
@@ -429,56 +443,56 @@ RCT_EXPORT_METHOD(disconnect) {
 }
 
 -(void)cameraSource:(nonnull TVICameraSource *)source didFailWithError:(nonnull NSError *)error {
-  [self sendEventCheckingListenerWithName:cameraDidStopRunning body:@{ @"error" : error.localizedDescription }];
+    [self sendEventCheckingListenerWithName:cameraDidStopRunning body:@{ @"error" : error.localizedDescription }];
 }
 
 # pragma mark - TVIRoomDelegate
 
 - (void)didConnectToRoom:(TVIRoom *)room {
-  NSMutableArray *participants = [NSMutableArray array];
-
-  for (TVIRemoteParticipant *p in room.remoteParticipants) {
-    p.delegate = self;
-    [participants addObject:[p toJSON]];
-  }
-  TVILocalParticipant *localParticipant = room.localParticipant;
-  [participants addObject:[localParticipant toJSON]];
+    NSMutableArray *participants = [NSMutableArray array];
+    
+    for (TVIRemoteParticipant *p in room.remoteParticipants) {
+        p.delegate = self;
+        [participants addObject:[p toJSON]];
+    }
+    TVILocalParticipant *localParticipant = room.localParticipant;
+    [participants addObject:[localParticipant toJSON]];
     [self sendEventCheckingListenerWithName:roomDidConnect body:@{ @"roomName" : room.name , @"roomSid": room.sid, @"participants" : participants }];
-
+    
 }
 
 - (void)room:(TVIRoom *)room didDisconnectWithError:(nullable NSError *)error {
-  self.room = nil;
-
-  NSMutableDictionary *body = [@{ @"roomName": room.name, @"roomSid": room.sid } mutableCopy];
-
-  if (error) {
-    [body addEntriesFromDictionary:@{ @"error" : error.localizedDescription }];
-  }
+    self.room = nil;
+    
+    NSMutableDictionary *body = [@{ @"roomName": room.name, @"roomSid": room.sid } mutableCopy];
+    
+    if (error) {
+        [body addEntriesFromDictionary:@{ @"error" : error.localizedDescription }];
+    }
     [self sendEventCheckingListenerWithName:roomDidDisconnect body:body];
 }
 
 - (void)room:(TVIRoom *)room didFailToConnectWithError:(nonnull NSError *)error{
-  self.room = nil;
-
-  NSMutableDictionary *body = [@{ @"roomName": room.name, @"roomSid": room.sid } mutableCopy];
-
-  if (error) {
-    [body addEntriesFromDictionary:@{ @"error" : error.localizedDescription }];
-  }
-
-  [self sendEventCheckingListenerWithName:roomDidFailToConnect body:body];
+    self.room = nil;
+    
+    NSMutableDictionary *body = [@{ @"roomName": room.name, @"roomSid": room.sid } mutableCopy];
+    
+    if (error) {
+        [body addEntriesFromDictionary:@{ @"error" : error.localizedDescription }];
+    }
+    
+    [self sendEventCheckingListenerWithName:roomDidFailToConnect body:body];
 }
 
 
 - (void)room:(TVIRoom *)room participantDidConnect:(TVIRemoteParticipant *)participant {
-  participant.delegate = self;
-
-  [self sendEventCheckingListenerWithName:roomParticipantDidConnect body:@{ @"roomName": room.name, @"roomSid": room.sid, @"participant": [participant toJSON] }];
+    participant.delegate = self;
+    
+    [self sendEventCheckingListenerWithName:roomParticipantDidConnect body:@{ @"roomName": room.name, @"roomSid": room.sid, @"participant": [participant toJSON] }];
 }
 
 - (void)room:(TVIRoom *)room participantDidDisconnect:(TVIRemoteParticipant *)participant {
-  [self sendEventCheckingListenerWithName:roomParticipantDidDisconnect body:@{ @"roomName": room.name, @"roomSid": room.sid, @"participant": [participant toJSON] }];
+    [self sendEventCheckingListenerWithName:roomParticipantDidDisconnect body:@{ @"roomName": room.name, @"roomSid": room.sid, @"participant": [participant toJSON] }];
 }
 
 # pragma mark - TVIRemoteParticipantDelegate
@@ -509,11 +523,11 @@ RCT_EXPORT_METHOD(disconnect) {
 }
 
 - (void)remoteParticipant:(TVIRemoteParticipant *)participant didEnableVideoTrack:(TVIRemoteVideoTrackPublication *)publication {
-  [self sendEventCheckingListenerWithName:participantEnabledVideoTrack body:@{ @"participant": [participant toJSON], @"track": [publication toJSON] }];
+    [self sendEventCheckingListenerWithName:participantEnabledVideoTrack body:@{ @"participant": [participant toJSON], @"track": [publication toJSON] }];
 }
 
 - (void)remoteParticipant:(TVIRemoteParticipant *)participant didDisableVideoTrack:(TVIRemoteVideoTrackPublication *)publication {
-  [self sendEventCheckingListenerWithName:participantDisabledVideoTrack body:@{ @"participant": [participant toJSON], @"track": [publication toJSON] }];
+    [self sendEventCheckingListenerWithName:participantDisabledVideoTrack body:@{ @"participant": [participant toJSON], @"track": [publication toJSON] }];
 }
 
 - (void)remoteParticipant:(TVIRemoteParticipant *)participant didEnableAudioTrack:(TVIRemoteAudioTrackPublication *)publication {

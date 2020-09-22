@@ -5,17 +5,13 @@
  * Jonathan Chang <slycoder@gmail.com>
  */
 
-package com.twiliorn.library;
+package com.actiotech.twiliovideorn;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
-import com.facebook.react.bridge.ReadableArray;
-import com.facebook.react.common.MapBuilder;
 import com.facebook.react.uimanager.SimpleViewManager;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.annotations.ReactProp;
-
-import java.util.Map;
 
 import org.webrtc.RendererCommon;
 
@@ -30,11 +26,11 @@ public class TwilioVideoPreviewManager extends SimpleViewManager<TwilioVideoPrev
 
     @ReactProp(name = "scaleType")
     public void setScaleType(TwilioVideoPreview view, @Nullable String scaleType) {
-      if (scaleType.equals("fit")) {
-        view.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
-      } else {
-        view.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL);
-      }
+        if (scaleType.equals("fit")) {
+            view.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
+        } else {
+            view.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL);
+        }
     }
 
     @Override

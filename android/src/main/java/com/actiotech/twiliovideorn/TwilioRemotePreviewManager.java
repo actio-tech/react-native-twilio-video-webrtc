@@ -5,9 +5,10 @@
  * Jonathan Chang <slycoder@gmail.com>
  */
 
-package com.twiliorn.library;
+package com.actiotech.twiliovideorn;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
+
 import android.util.Log;
 
 import com.facebook.react.uimanager.SimpleViewManager;
@@ -30,11 +31,11 @@ public class TwilioRemotePreviewManager extends SimpleViewManager<TwilioRemotePr
     @ReactProp(name = "scaleType")
     public void setScaleType(TwilioRemotePreview view, @Nullable String scaleType) {
 
-      if (scaleType.equals("fit")) {
-        view.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
-      } else {
-        view.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL);
-      }
+        if (scaleType.equals("fit")) {
+            view.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
+        } else {
+            view.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL);
+        }
     }
 
     @ReactProp(name = "trackSid")
@@ -43,7 +44,7 @@ public class TwilioRemotePreviewManager extends SimpleViewManager<TwilioRemotePr
         Log.i("CustomTwilioVideoView", "Initialize Twilio REMOTE");
         Log.i("CustomTwilioVideoView", trackSid);
         myTrackSid = trackSid;
-        CustomTwilioVideoView.registerPrimaryVideoView(view.getSurfaceViewRenderer(), trackSid);
+        TwilioVideoModule.registerPrimaryVideoView(view.getSurfaceViewRenderer(), trackSid);
     }
 
 

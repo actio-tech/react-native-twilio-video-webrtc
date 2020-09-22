@@ -10,7 +10,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import { NativeModules, NativeEventEmitter, View } from "react-native";
 
-const { TWVideoModule } = NativeModules;
+import TwilioVideo from "./TwilioVideo";
+
 export default class extends React.PureComponent {
   static propTypes = {
     /**
@@ -84,56 +85,11 @@ export default class extends React.PureComponent {
      */
     onParticipantRemovedAudioTrack: PropTypes.func,
     /**
-     * Called when a video track has been enabled.
-     *
-     * @param {{participant, track}}
-     */
-    onParticipantEnabledVideoTrack: PropTypes.func,
-    /**
-     * Called when a video track has been disabled.
-     *
-     * @param {{participant, track}}
-     */
-    onParticipantDisabledVideoTrack: PropTypes.func,
-    /**
-     * Called when an audio track has been enabled.
-     *
-     * @param {{participant, track}}
-     */
-    onParticipantEnabledAudioTrack: PropTypes.func,
-    /**
-     * Called when an audio track has been disabled.
-     *
-     * @param {{participant, track}}
-     */
-    onParticipantDisabledAudioTrack: PropTypes.func,
-    /**
      * Called when an dataTrack receives a message
      *
      * @param {{message}}
      */
     onDataTrackMessageReceived: PropTypes.func,
-    /**
-     * Called when the camera has started
-     *
-     */
-    onCameraDidStart: PropTypes.func,
-    /**
-     * Called when the camera has been interrupted
-     *
-     */
-    onCameraWasInterrupted: PropTypes.func,
-    /**
-     * Called when the camera interruption has ended
-     *
-     */
-    onCameraInterruptionEnded: PropTypes.func,
-    /**
-     * Called when the camera has stopped runing with an error
-     *
-     * @param {{error}} The error message description
-     */
-    onCameraDidStopRunning: PropTypes.func,
     /**
      * Called when stats are received (after calling getStats)
      *
@@ -143,71 +99,44 @@ export default class extends React.PureComponent {
   };
 
   subscriptions = [];
-  eventEmitter = new NativeEventEmitter(TWVideoModule);
 
   constructor(props) {
     super(props);
 
     // Register events
     this.registerEvents();
-    this.startLocalVideo();
-    this.startLocalAudio();
   }
 
   componentWillUnmount() {
     this.unregisterEvents();
-    this.stopLocalVideo();
-    this.stopLocalAudio();
   }
-
-  /**
-   * Locally mute/unmute all remote audio tracks from a given participant
-   */
-  setRemoteAudioPlayback = ({ participantSid, enabled }) => {
-    TWVideoModule.setRemoteAudioPlayback(participantSid, enabled);
-  };
-
-  setRemoteAudioEnabled = (enabled) => {
-    return Promise.resolve(enabled);
-  };
-
-  setBluetoothHeadsetConnected = (enabled) => {
-    return Promise.resolve(enabled);
-  };
 
   /**
    * Enable or disable local video
    */
   setLocalVideoEnabled = (enabled) => {
-    return TWVideoModule.setLocalVideoEnabled(enabled);
+    return TwilioVideo.setLocalVideoEnabled(enabled);
   };
 
   /**
    * Enable or disable local audio
    */
   setLocalAudioEnabled = (enabled) => {
-    return TWVideoModule.setLocalAudioEnabled(enabled);
+    return TwilioVideo.setLocalAudioEnabled(enabled);
   };
 
   /**
    * Flip between the front and back camera
    */
   flipCamera = () => {
-    TWVideoModule.flipCamera();
-  };
-
-  /**
-   * Toggle audio setup from speaker (default) and headset
-   */
-  toggleSoundSetup = (speaker) => {
-    TWVideoModule.toggleSoundSetup(speaker);
+    TwilioVideo.flipCamera();
   };
 
   /**
    * Get connection stats
    */
   getStats = () => {
-    TWVideoModule.getStats();
+    TwilioVideo.getStats();
   };
 
   /**
@@ -216,15 +145,15 @@ export default class extends React.PureComponent {
    * @param  {String} accessToken        The Twilio's JWT access token
    * @param  {String} encodingParameters Control Encoding config
    */
-  connect = ({ roomName, accessToken, encodingParameters }) => {
-    TWVideoModule.connect(accessToken, roomName, encodingParameters);
+  connect = ({ roomName, accessToken, ...options }) => {
+    TwilioVideo.connect(roomName, accessToken, options);
   };
 
   /**
    * Disconnect from current room
    */
   disconnect = () => {
-    TWVideoModule.disconnect();
+    TwilioVideo.disconnect();
   };
 
   /**
@@ -232,136 +161,93 @@ export default class extends React.PureComponent {
    * @param  {String} message    The message string to send
    */
   sendString = (message) => {
-    TWVideoModule.sendString(message);
+    TwilioVideo.sendString(message);
   };
 
   startLocalVideo = () => {
-    TWVideoModule.startLocalVideo();
+    TwilioVideo.startLocalVideo();
   };
 
   stopLocalVideo = () => {
-    TWVideoModule.stopLocalVideo();
+    TwilioVideo.stopLocalVideo();
   };
 
   startLocalAudio = () => {
-    TWVideoModule.startLocalAudio();
+    TwilioVideo.startLocalAudio();
   };
 
   stopLocalAudio = () => {
-    TWVideoModule.stopLocalAudio();
+    TwilioVideo.stopLocalAudio();
   };
 
   unregisterEvents = () => {
-    TWVideoModule.changeListenerStatus(false);
     this.subscriptions.forEach((e) => e.remove());
     this.subscriptions = [];
   };
 
   registerEvents = () => {
-    TWVideoModule.changeListenerStatus(true);
-
     this.subscriptions = [
-      this.eventEmitter.addListener("roomDidConnect", (data) => {
+      TwilioVideo.onRoomDidConnect((data) => {
         if (this.props.onRoomDidConnect) {
           this.props.onRoomDidConnect(data);
         }
       }),
-      this.eventEmitter.addListener("roomDidDisconnect", (data) => {
+      TwilioVideo.onRoomDidDisconnect((data) => {
         if (this.props.onRoomDidDisconnect) {
           this.props.onRoomDidDisconnect(data);
         }
       }),
-      this.eventEmitter.addListener("roomDidFailToConnect", (data) => {
+      TwilioVideo.onRoomDidFailToConnect((data) => {
         if (this.props.onRoomDidFailToConnect) {
           this.props.onRoomDidFailToConnect(data);
         }
       }),
-      this.eventEmitter.addListener("roomParticipantDidConnect", (data) => {
+      TwilioVideo.onRoomParticipantDidConnect((data) => {
         if (this.props.onRoomParticipantDidConnect) {
           this.props.onRoomParticipantDidConnect(data);
         }
       }),
-      this.eventEmitter.addListener("roomParticipantDidDisconnect", (data) => {
+      TwilioVideo.onRoomParticipantDidDisconnect((data) => {
         if (this.props.onRoomParticipantDidDisconnect) {
           this.props.onRoomParticipantDidDisconnect(data);
         }
       }),
-      this.eventEmitter.addListener("participantAddedVideoTrack", (data) => {
+      TwilioVideo.onParticipantAddedVideoTrack((data) => {
         if (this.props.onParticipantAddedVideoTrack) {
           this.props.onParticipantAddedVideoTrack(data);
         }
       }),
-      this.eventEmitter.addListener("participantAddedDataTrack", (data) => {
+      TwilioVideo.onParticipantAddedDataTrack((data) => {
         if (this.props.onParticipantAddedDataTrack) {
           this.props.onParticipantAddedDataTrack(data);
         }
       }),
-      this.eventEmitter.addListener("participantRemovedDataTrack", (data) => {
+      TwilioVideo.onParticipantRemovedDataTrack((data) => {
         if (this.props.onParticipantRemovedDataTrack) {
           this.props.onParticipantRemovedDataTrack(data);
         }
       }),
-      this.eventEmitter.addListener("participantRemovedVideoTrack", (data) => {
+      TwilioVideo.onParticipantRemovedVideoTrack((data) => {
         if (this.props.onParticipantRemovedVideoTrack) {
           this.props.onParticipantRemovedVideoTrack(data);
         }
       }),
-      this.eventEmitter.addListener("participantAddedAudioTrack", (data) => {
+      TwilioVideo.onParticipantAddedAudioTrack((data) => {
         if (this.props.onParticipantAddedAudioTrack) {
           this.props.onParticipantAddedAudioTrack(data);
         }
       }),
-      this.eventEmitter.addListener("participantRemovedAudioTrack", (data) => {
+      TwilioVideo.onParticipantRemovedAudioTrack((data) => {
         if (this.props.onParticipantRemovedAudioTrack) {
           this.props.onParticipantRemovedAudioTrack(data);
         }
       }),
-      this.eventEmitter.addListener("participantEnabledVideoTrack", (data) => {
-        if (this.props.onParticipantEnabledVideoTrack) {
-          this.props.onParticipantEnabledVideoTrack(data);
-        }
-      }),
-      this.eventEmitter.addListener("participantDisabledVideoTrack", (data) => {
-        if (this.props.onParticipantDisabledVideoTrack) {
-          this.props.onParticipantDisabledVideoTrack(data);
-        }
-      }),
-      this.eventEmitter.addListener("participantEnabledAudioTrack", (data) => {
-        if (this.props.onParticipantEnabledAudioTrack) {
-          this.props.onParticipantEnabledAudioTrack(data);
-        }
-      }),
-      this.eventEmitter.addListener("participantDisabledAudioTrack", (data) => {
-        if (this.props.onParticipantDisabledAudioTrack) {
-          this.props.onParticipantDisabledAudioTrack(data);
-        }
-      }),
-      this.eventEmitter.addListener("dataTrackMessageReceived", (data) => {
+      TwilioVideo.onDataTrackMessageReceived((data) => {
         if (this.props.onDataTrackMessageReceived) {
           this.props.onDataTrackMessageReceived(data);
         }
       }),
-      this.eventEmitter.addListener("cameraDidStart", (data) => {
-        if (this.props.onCameraDidStart) {
-          this.props.onCameraDidStart(data);
-        }
-      }),
-      this.eventEmitter.addListener("cameraWasInterrupted", (data) => {
-        if (this.props.onCameraWasInterrupted) {
-          this.props.onCameraWasInterrupted(data);
-        }
-      }),
-      this.eventEmitter.addListener("cameraInterruptionEnded", (data) => {
-        if (this.props.onCameraInterruptionEnded) {
-          this.props.onCameraInterruptionEnded(data);
-        }
-      }),
-      this.eventEmitter.addListener("cameraDidStopRunning", (data) => {
-        if (this.props.onCameraDidStopRunning) {
-          this.props.onCameraDidStopRunning(data);
-        }
-      }),
-      this.eventEmitter.addListener("statsReceived", (data) => {
+      TwilioVideo.onStatsReceived((data) => {
         if (this.props.onStatsReceived) {
           this.props.onStatsReceived(data);
         }

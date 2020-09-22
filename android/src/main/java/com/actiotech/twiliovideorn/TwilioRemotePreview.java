@@ -5,7 +5,7 @@
  * Jonathan Chang <slycoder@gmail.com>
  */
 
-package com.twiliorn.library;
+package com.actiotech.twiliovideorn;
 
 import android.content.Context;
 import android.util.Log;
@@ -22,6 +22,6 @@ public class TwilioRemotePreview extends RNVideoViewGroup {
         Log.i("CustomTwilioVideoView", trackSid);
 
 
-        CustomTwilioVideoView.registerPrimaryVideoView(this.getSurfaceViewRenderer(), trackSid);
+        TwilioVideoModule.registerPrimaryVideoView(this.getSurfaceViewRenderer(), trackSid);
     }
 }

@@ -5,7 +5,7 @@
  * Jonathan Chang <slycoder@gmail.com>
  */
 
-package com.twiliorn.library;
+package com.actiotech.twiliovideorn;
 
 import android.content.Context;
 
@@ -16,7 +16,7 @@ public class TwilioVideoPreview extends RNVideoViewGroup {
 
     public TwilioVideoPreview(Context context) {
         super(context);
-        CustomTwilioVideoView.registerThumbnailVideoView(this.getSurfaceViewRenderer());
+        TwilioVideoModule.registerThumbnailVideoView(this.getSurfaceViewRenderer());
         this.getSurfaceViewRenderer().applyZOrder(true);
     }
 }
