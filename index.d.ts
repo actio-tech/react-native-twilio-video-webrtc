@@ -118,7 +118,7 @@ declare module 'react-native-twilio-video-webrtc' {
     participant: Participant;
   };
 
-  export type MessageReceivedEventCb = ({ message: string }) => void;
+  export type MessageReceivedEventCb = ({ message: string, senderId: string }) => void;
   export type StatsReceivedEventCb = (stats: any) => void;
 
   export type RoomEventCb = (p: RoomEventArgs) => void;
