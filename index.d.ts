@@ -126,7 +126,7 @@ declare module 'react-native-twilio-video-webrtc' {
 
   export type ParticipantEventCb = (p: ParticipantEventArgs) => void;
 
-  interface TwilioVideo {
+  interface ITwilioVideo {
     connect: (
       roomName: string,
       accessToken: string,
@@ -175,6 +175,8 @@ declare module 'react-native-twilio-video-webrtc' {
 
     onStatsReceived: StatsReceivedEventCb;
   }
+
+  const TwilioVideo: ITwilioVideo;
 
   type TwilioVideoViewProps = ViewProps & {
     onCameraDidStart?: () => void;
