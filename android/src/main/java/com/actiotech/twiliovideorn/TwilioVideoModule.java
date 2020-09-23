@@ -21,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.StringDef;
 
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 
 import com.facebook.react.bridge.LifecycleEventListener;
@@ -178,7 +179,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     private LocalDataTrack localDataTrack;
 
     // Map used to map remote data tracks to remote participants
-    private final Map<RemoteDataTrack, RemoteParticipant> dataTrackRemoteParticipantMap =
+    private final Map<String, Pair<RemoteDataTrack, RemoteParticipant>> remoteDataTrackMap =
             new HashMap<>();
 
     @NonNull
@@ -846,8 +847,12 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     }
 
     private void addRemoteDataTrack(RemoteParticipant remoteParticipant, RemoteDataTrack remoteDataTrack) {
-        dataTrackRemoteParticipantMap.put(remoteDataTrack, remoteParticipant);
+        remoteDataTrackMap.put(remoteDataTrack.getSid(), new Pair<>(remoteDataTrack, remoteParticipant));
         remoteDataTrack.setListener(remoteDataTrackListener());
+    }
+
+    private void removeRemoteDataTrack(RemoteParticipant remoteParticipant, RemoteDataTrack remoteDataTrack) {
+        remoteDataTrackMap.remove(remoteDataTrack.getSid());
     }
 
     // ====== MEDIA LISTENER =======================================================================
@@ -893,6 +898,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             public void onDataTrackUnsubscribed(RemoteParticipant remoteParticipant, RemoteDataTrackPublication publication, RemoteDataTrack remoteDataTrack) {
                 WritableMap event = buildParticipantDataEvent(remoteParticipant);
                 pushEvent(ON_PARTICIPANT_REMOVED_DATA_TRACK, event);
+                dataTrackMessageThreadHandler.post(() -> removeRemoteDataTrack(remoteParticipant, remoteDataTrack));
             }
 
             @Override
@@ -993,9 +999,12 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         return event;
     }
 
-    private WritableMap buildDataTrackEvent(String message) {
+    private WritableMap buildDataTrackEvent(RemoteDataTrack remoteDataTrack, String message) {
+        Pair<RemoteDataTrack, RemoteParticipant> dataTrackInfo = remoteDataTrackMap.get(remoteDataTrack.getSid());
+        String senderId = dataTrackInfo != null ? dataTrackInfo.second.getSid() : null;
         WritableMap event = new WritableNativeMap();
         event.putString("message", message);
+        event.putString("senderId", senderId);
         return event;
     }
 
@@ -1052,7 +1061,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
 
             @Override
             public void onMessage(RemoteDataTrack remoteDataTrack, String message) {
-                WritableMap event = buildDataTrackEvent(message);
+                WritableMap event = buildDataTrackEvent(remoteDataTrack, message);
                 pushEvent(ON_DATATRACK_MESSAGE_RECEIVED, event);
             }
         };

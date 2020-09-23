@@ -67,6 +67,7 @@ TVIVideoFormat *RCTTWVideoModuleCameraSourceSelectVideoFormatBySize(AVCaptureDev
 @property (strong, nonatomic) TVILocalDataTrack* localDataTrack;
 @property (strong, nonatomic) TVIRoom *room;
 @property (nonatomic) BOOL listening;
+@property (strong, nonatomic) NSMutableDictionary* remoteDataTrackMap;
 
 @end
 
@@ -336,6 +337,8 @@ RCT_EXPORT_METHOD(getStats) {
 }
 
 RCT_EXPORT_METHOD(connect:(NSString *)roomName accessToken:(NSString *)accessToken options:(NSDictionary *)options) {
+    self.remoteDataTrackMap = [NSMutableDictionary new];
+    
     if (options[@"enableVideo"] && self.localVideoTrack == nil) {
         // We disabled video in a previous call, attempt to re-enable
         [self startLocalVideo];
@@ -390,6 +393,8 @@ RCT_EXPORT_METHOD(disconnect) {
     [self stopLocalAudio];
     [self stopLocalVideo];
     
+    [self.remoteDataTrackMap removeAllObjects];
+
     [self.room disconnect];
 }
 
@@ -499,10 +504,12 @@ RCT_EXPORT_METHOD(disconnect) {
 
 - (void)didSubscribeToDataTrack:(TVIRemoteDataTrack *)dataTrack publication:(TVIRemoteDataTrackPublication *)publication forParticipant:(TVIRemoteParticipant *)participant {
     dataTrack.delegate = self;
+    self.remoteDataTrackMap[dataTrack.sid] = @{ @"senderId": participant.sid };
     [self sendEventCheckingListenerWithName:participantAddedDataTrack body:@{ @"participant": [participant toJSON], @"track": [publication toJSON] }];
 }
 
-- (void)didUnsubscribeFromDataTrack:(TVIRemoteVideoTrack *)videoTrack publication:(TVIRemoteVideoTrackPublication *)publication forParticipant:(TVIRemoteParticipant *)participant {
+- (void)didUnsubscribeFromDataTrack:(TVIRemoteDataTrack *)dataTrack publication:(TVIRemoteVideoTrackPublication *)publication forParticipant:(TVIRemoteParticipant *)participant {
+    [self.remoteDataTrackMap removeObjectForKey:dataTrack.sid];
     [self sendEventCheckingListenerWithName:participantRemovedDataTrack body:@{ @"participant": [participant toJSON], @"track": [publication toJSON] }];
 }
 
@@ -541,7 +548,8 @@ RCT_EXPORT_METHOD(disconnect) {
 # pragma mark - TVIRemoteDataTrackDelegate
 
 - (void)remoteDataTrack:(nonnull TVIRemoteDataTrack *)remoteDataTrack didReceiveString:(nonnull NSString *)message {
-    [self sendEventCheckingListenerWithName:dataTrackMessageReceived body:@{ @"message": message }];
+    NSString* senderId = self.remoteDataTrackMap[remoteDataTrack.sid][@"senderId"];
+    [self sendEventCheckingListenerWithName:dataTrackMessageReceived body:@{ @"message": message, @"senderId": senderId }];
 }
 
 - (void)remoteDataTrack:(nonnull TVIRemoteDataTrack *)remoteDataTrack didReceiveData:(nonnull NSData *)message {
