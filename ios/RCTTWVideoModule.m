@@ -504,7 +504,7 @@ RCT_EXPORT_METHOD(disconnect) {
 
 - (void)didSubscribeToDataTrack:(TVIRemoteDataTrack *)dataTrack publication:(TVIRemoteDataTrackPublication *)publication forParticipant:(TVIRemoteParticipant *)participant {
     dataTrack.delegate = self;
-    self.remoteDataTrackMap[dataTrack.sid] = @{ @"senderId": participant.sid };
+    self.remoteDataTrackMap[dataTrack.sid] = @{ @"senderId": participant.identity };
     [self sendEventCheckingListenerWithName:participantAddedDataTrack body:@{ @"participant": [participant toJSON], @"track": [publication toJSON] }];
 }
 

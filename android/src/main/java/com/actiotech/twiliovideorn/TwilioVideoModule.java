@@ -1001,7 +1001,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
 
     private WritableMap buildDataTrackEvent(RemoteDataTrack remoteDataTrack, String message) {
         Pair<RemoteDataTrack, RemoteParticipant> dataTrackInfo = remoteDataTrackMap.get(remoteDataTrack.getSid());
-        String senderId = dataTrackInfo != null ? dataTrackInfo.second.getSid() : null;
+        String senderId = dataTrackInfo != null ? dataTrackInfo.second.getIdentity() : null;
         WritableMap event = new WritableNativeMap();
         event.putString("message", message);
         event.putString("senderId", senderId);
