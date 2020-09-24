@@ -68,6 +68,8 @@ TVIVideoFormat *RCTTWVideoModuleCameraSourceSelectVideoFormatBySize(AVCaptureDev
 @property (strong, nonatomic) TVIRoom *room;
 @property (nonatomic) BOOL listening;
 @property (strong, nonatomic) NSMutableDictionary* remoteDataTrackMap;
+@property (nonatomic, copy) void(^statsReceivedCallback)(NSArray<TVIStatsReport *> * _Nonnull statsReports);
+@property (strong, nonatomic) NSTimer* getStatsTimer;
 
 @end
 
@@ -77,7 +79,44 @@ TVIVideoFormat *RCTTWVideoModuleCameraSourceSelectVideoFormatBySize(AVCaptureDev
 
 RCT_EXPORT_MODULE();
 
+- (id)init {
+    self = [super init];
+    if (self) {
+        __weak RCTTWVideoModule *weakSelf = self;
+        self.statsReceivedCallback = ^(NSArray<TVIStatsReport *> * _Nonnull statsReports) {
+            NSMutableDictionary *eventBody = [[NSMutableDictionary alloc] initWithCapacity:10];
+            for (TVIStatsReport *statsReport in statsReports) {
+                NSMutableArray *audioTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
+                NSMutableArray *videoTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
+                NSMutableArray *localAudioTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
+                NSMutableArray *localVideoTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
+                for (TVIRemoteAudioTrackStats *stats in statsReport.remoteAudioTrackStats) {
+                    [audioTrackStats addObject:[weakSelf convertRemoteAudioTrackStats:stats]];
+                }
+                for (TVIRemoteVideoTrackStats *stats in statsReport.remoteVideoTrackStats) {
+                    [videoTrackStats addObject:[weakSelf convertRemoteVideoTrackStats:stats]];
+                }
+                for (TVILocalAudioTrackStats *stats in statsReport.localAudioTrackStats) {
+                    [localAudioTrackStats addObject:[weakSelf convertLocalAudioTrackStats:stats]];
+                }
+                for (TVILocalVideoTrackStats *stats in statsReport.localVideoTrackStats) {
+                    [localVideoTrackStats addObject:[weakSelf convertLocalVideoTrackStats:stats]];
+                }
+                eventBody[statsReport.peerConnectionId] = @{
+                    @"remoteAudioTrackStats": audioTrackStats,
+                    @"remoteVideoTrackStats": videoTrackStats,
+                    @"localAudioTrackStats": localAudioTrackStats,
+                    @"localVideoTrackStats": localVideoTrackStats
+                };
+            }
+            [weakSelf sendEventCheckingListenerWithName:statsReceived body:eventBody];
+        };
+    }
+    return self;
+}
+
 - (void)dealloc {
+    [self cancelStatsRequest];
     // We are done with camera
     if (self.camera) {
         [self.camera stopCapture];
@@ -305,35 +344,21 @@ RCT_EXPORT_METHOD(toggleSoundSetup:(BOOL)speaker) {
 
 RCT_EXPORT_METHOD(getStats) {
     if (self.room) {
-        [self.room getStatsWithBlock:^(NSArray<TVIStatsReport *> * _Nonnull statsReports) {
-            NSMutableDictionary *eventBody = [[NSMutableDictionary alloc] initWithCapacity:10];
-            for (TVIStatsReport *statsReport in statsReports) {
-                NSMutableArray *audioTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
-                NSMutableArray *videoTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
-                NSMutableArray *localAudioTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
-                NSMutableArray *localVideoTrackStats = [[NSMutableArray alloc] initWithCapacity:10];
-                for (TVIRemoteAudioTrackStats *stats in statsReport.remoteAudioTrackStats) {
-                    [audioTrackStats addObject:[self convertRemoteAudioTrackStats:stats]];
+        [self.room getStatsWithBlock: self.statsReceivedCallback];
                 }
-                for (TVIRemoteVideoTrackStats *stats in statsReport.remoteVideoTrackStats) {
-                    [videoTrackStats addObject:[self convertRemoteVideoTrackStats:stats]];
-                }
-                for (TVILocalAudioTrackStats *stats in statsReport.localAudioTrackStats) {
-                    [localAudioTrackStats addObject:[self convertLocalAudioTrackStats:stats]];
-                }
-                for (TVILocalVideoTrackStats *stats in statsReport.localVideoTrackStats) {
-                    [localVideoTrackStats addObject:[self convertLocalVideoTrackStats:stats]];
-                }
-                eventBody[statsReport.peerConnectionId] = @{
-                    @"remoteAudioTrackStats": audioTrackStats,
-                    @"remoteVideoTrackStats": videoTrackStats,
-                    @"localAudioTrackStats": localAudioTrackStats,
-                    @"localVideoTrackStats": localVideoTrackStats
-                };
             }
-            [self sendEventCheckingListenerWithName:statsReceived body:eventBody];
-        }];
+
+RCT_EXPORT_METHOD(requestStats:(int)intervalMs) {
+    [self.getStatsTimer invalidate];
+    self.getStatsTimer = [NSTimer scheduledTimerWithTimeInterval: intervalMs / 1000
+                                                          target: self
+                                                          selector: @selector(getStats)
+                                                          userInfo: nil repeats:YES];
     }
+
+RCT_EXPORT_METHOD(cancelStatsRequest) {
+    [self.getStatsTimer invalidate];
+    self.getStatsTimer = nil;
 }
 
 RCT_EXPORT_METHOD(connect:(NSString *)roomName accessToken:(NSString *)accessToken options:(NSDictionary *)options) {
@@ -390,6 +415,8 @@ RCT_EXPORT_METHOD(sendString:(nonnull NSString *)message) {
 }
 
 RCT_EXPORT_METHOD(disconnect) {
+    [self cancelStatsRequest];
+    
     [self stopLocalAudio];
     [self stopLocalVideo];
     

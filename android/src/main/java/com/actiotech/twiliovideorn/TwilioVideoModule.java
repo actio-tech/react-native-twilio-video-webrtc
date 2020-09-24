@@ -74,6 +74,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Collections;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import kotlin.Unit;
 
@@ -98,7 +100,7 @@ import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPAN
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_STATS_RECEIVED;
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_VIDEO_CHANGED;
 
-public class TwilioVideoModule extends ReactContextBaseJavaModule implements LifecycleEventListener {
+public class TwilioVideoModule extends ReactContextBaseJavaModule implements LifecycleEventListener, StatsListener {
     private static final String TAG = "TwilioVideoModule";
     private static final String DATA_TRACK_MESSAGE_THREAD_NAME = "DataTrackMessages";
     private boolean enableRemoteAudio = false;
@@ -181,6 +183,17 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     // Map used to map remote data tracks to remote participants
     private final Map<String, Pair<RemoteDataTrack, RemoteParticipant>> remoteDataTrackMap =
             new HashMap<>();
+
+    private final TimerTask requestStatsTask = new TimerTask() {
+        @Override
+        public void run() {
+            if (room != null) {
+                room.getStats(TwilioVideoModule.this);
+            }
+        }
+    };
+
+    private Timer requestStatsTimer = new Timer();
 
     @NonNull
     @Override
@@ -351,6 +364,8 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
          * Always disconnect from the room before leaving the Activity to
          * ensure any memory allocated to the Room resource is freed.
          */
+        cancelStatsRequest();
+
         if (room != null && room.getState() != Room.State.DISCONNECTED) {
             room.disconnect();
             disconnectedFromOnDestroy = true;
@@ -484,6 +499,8 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void disconnect() {
+        cancelStatsRequest();
+
         if (room != null) {
             room.disconnect();
         }
@@ -654,40 +671,24 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     @ReactMethod
     public void getStats() {
         if (room != null) {
-            room.getStats(new StatsListener() {
-                @Override
-                public void onStats(List<StatsReport> statsReports) {
-                    WritableMap event = new WritableNativeMap();
-                    for (StatsReport sr : statsReports) {
-                        WritableMap connectionStats = new WritableNativeMap();
-                        WritableArray as = new WritableNativeArray();
-                        for (RemoteAudioTrackStats s : sr.getRemoteAudioTrackStats()) {
-                            as.pushMap(convertAudioTrackStats(s));
-                        }
-                        connectionStats.putArray("remoteAudioTrackStats", as);
+            room.getStats(this);
+        }
+    }
 
-                        WritableArray vs = new WritableNativeArray();
-                        for (RemoteVideoTrackStats s : sr.getRemoteVideoTrackStats()) {
-                            vs.pushMap(convertVideoTrackStats(s));
-                        }
-                        connectionStats.putArray("remoteVideoTrackStats", vs);
+    @ReactMethod
+    public void requestStats(int intervalMs) {
+        if (requestStatsTimer != null) {
+            requestStatsTimer.cancel();
+        }
+        requestStatsTimer = new Timer();
+        requestStatsTimer.scheduleAtFixedRate(requestStatsTask, 0, intervalMs);
+    }
 
-                        WritableArray las = new WritableNativeArray();
-                        for (LocalAudioTrackStats s : sr.getLocalAudioTrackStats()) {
-                            las.pushMap(convertLocalAudioTrackStats(s));
-                        }
-                        connectionStats.putArray("localAudioTrackStats", las);
-
-                        WritableArray lvs = new WritableNativeArray();
-                        for (LocalVideoTrackStats s : sr.getLocalVideoTrackStats()) {
-                            lvs.pushMap(convertLocalVideoTrackStats(s));
-                        }
-                        connectionStats.putArray("localVideoTrackStats", lvs);
-                        event.putMap(sr.getPeerConnectionId(), connectionStats);
-                    }
-                    pushEvent(ON_STATS_RECEIVED, event);
-                }
-            });
+    @ReactMethod
+    public void cancelStatsRequest() {
+        if (requestStatsTimer != null) {
+            requestStatsTimer.cancel();
+            requestStatsTimer = null;
         }
     }
 
@@ -1065,5 +1066,38 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
                 pushEvent(ON_DATATRACK_MESSAGE_RECEIVED, event);
             }
         };
+    }
+
+    @Override
+    public void onStats(List<StatsReport> statsReports) {
+        WritableMap event = new WritableNativeMap();
+        for (StatsReport sr : statsReports) {
+            WritableMap connectionStats = new WritableNativeMap();
+            WritableArray as = new WritableNativeArray();
+            for (RemoteAudioTrackStats s : sr.getRemoteAudioTrackStats()) {
+                as.pushMap(convertAudioTrackStats(s));
+            }
+            connectionStats.putArray("remoteAudioTrackStats", as);
+
+            WritableArray vs = new WritableNativeArray();
+            for (RemoteVideoTrackStats s : sr.getRemoteVideoTrackStats()) {
+                vs.pushMap(convertVideoTrackStats(s));
+            }
+            connectionStats.putArray("remoteVideoTrackStats", vs);
+
+            WritableArray las = new WritableNativeArray();
+            for (LocalAudioTrackStats s : sr.getLocalAudioTrackStats()) {
+                las.pushMap(convertLocalAudioTrackStats(s));
+            }
+            connectionStats.putArray("localAudioTrackStats", las);
+
+            WritableArray lvs = new WritableNativeArray();
+            for (LocalVideoTrackStats s : sr.getLocalVideoTrackStats()) {
+                lvs.pushMap(convertLocalVideoTrackStats(s));
+            }
+            connectionStats.putArray("localVideoTrackStats", lvs);
+            event.putMap(sr.getPeerConnectionId(), connectionStats);
+        }
+        pushEvent(ON_STATS_RECEIVED, event);
     }
 }
