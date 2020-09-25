@@ -1,5 +1,5 @@
 declare module 'react-native-twilio-video-webrtc' {
-  import { ViewProps } from 'react-native';
+  import { EmitterSubscription, ViewProps } from 'react-native';
   import React from 'react';
 
   enum TwilioErrorCode {
@@ -118,13 +118,58 @@ declare module 'react-native-twilio-video-webrtc' {
     participant: Participant;
   };
 
-  export type MessageReceivedEventCb = ({ message: string, senderId: string }) => void;
-  export type StatsReceivedEventCb = (stats: any) => void;
+  export type MessageReceivedEventCb = ({
+    message: string,
+    senderId: string,
+  }) => void;
+  export type StatsReceivedEventCb = (stats: TwilioStats) => void;
 
   export type RoomEventCb = (p: RoomEventArgs) => void;
   export type RoomErrorEventCb = (t: RoomErrorEventArgs) => void;
 
   export type ParticipantEventCb = (p: ParticipantEventArgs) => void;
+
+  interface AudioTrackStats {
+    audioLevel: number;
+    jitter: number;
+  }
+
+  interface VideoTrackStats {
+    dimensions: {
+      width: number;
+      height: number;
+    }
+    frameRate: number;
+  }
+
+  interface BaseTrackStats {
+    codec: string,
+    packetsLost: number,
+    timestamp: number,
+    trackSid: string,
+  }
+
+  interface LocalTrackStats {
+    bytesSent: number,
+    packetsSent: number,
+    roundTripTime: number,
+  }
+
+  interface RemoteTrackStats {
+    bytesReceived: number,
+    packetsReceived: number,
+  }
+
+  export interface TwilioStats {
+    [connectionId: string]: {
+      remoteAudioTrackStats: Array<BaseTrackStats & AudioTrackStats & RemoteTrackStats>;
+      remoteVideoTrackStats: Array<BaseTrackStats & VideoTrackStats & RemoteTrackStats>;
+      localAudioTrackStats: Array<BaseTrackStats & AudioTrackStats & LocalTrackStats>;
+      localVideoTrackStats: Array<BaseTrackStats & VideoTrackStats & LocalTrackStats>;
+    };
+  }
+
+  export type TwilioSubscription<CFunc> = (f: CFunc) => EmitterSubscription;
 
   interface ITwilioVideo {
     connect: (
@@ -139,6 +184,10 @@ declare module 'react-native-twilio-video-webrtc' {
 
     getStats: () => void;
 
+    requestStats: (intervalMs: number) => void;
+
+    cancelStatsRequest: () => void;
+
     sendString: (message: string) => void;
 
     setLocalVideoEnabled: (enabled: boolean) => Promise<boolean>;
@@ -147,33 +196,33 @@ declare module 'react-native-twilio-video-webrtc' {
 
     setRemoteAudioEnabled: (participantSid: string, enabled: boolean) => void;
 
-    onRoomDidConnect: RoomEventCb;
+    onRoomDidConnect: TwilioSubscription<RoomEventCb>;
 
-    onRoomDidDisconnect: RoomErrorEventCb;
+    onRoomDidDisconnect: TwilioSubscription<RoomErrorEventCb>;
 
-    onRoomDidFailToConnect: RoomErrorEventCb;
+    onRoomDidFailToConnect: TwilioSubscription<RoomErrorEventCb>;
 
-    onRoomParticipantDidConnect: ParticipantEventCb;
+    onRoomParticipantDidConnect: TwilioSubscription<ParticipantEventCb>;
 
-    onRoomParticipantDidDisconnect: ParticipantEventCb;
+    onRoomParticipantDidDisconnect: TwilioSubscription<ParticipantEventCb>;
 
-    onParticipantAddedVideoTrack: TrackEventCb;
+    onParticipantAddedVideoTrack: TwilioSubscription<TrackEventCb>;
 
-    onParticipantAddedDataTrack: TrackEventCb;
+    onParticipantAddedDataTrack: TwilioSubscription<TrackEventCb>;
 
-    onParticipantRemovedDataTrack: TrackEventCb;
+    onParticipantRemovedDataTrack: TwilioSubscription<TrackEventCb>;
 
-    onParticipantRemovedVideoTrack: TrackEventCb;
+    onParticipantRemovedVideoTrack: TwilioSubscription<TrackEventCb>;
 
-    onParticipantAddedAudioTrack: TrackEventCb;
+    onParticipantAddedAudioTrack: TwilioSubscription<TrackEventCb>;
 
-    onParticipantRemovedAudioTrack: TrackEventCb;
+    onParticipantRemovedAudioTrack: TwilioSubscription<TrackEventCb>;
 
-    onParticipantRemovedDataTrack: TrackEventCb;
+    onParticipantRemovedDataTrack: TwilioSubscription<TrackEventCb>;
 
-    onDataTrackMessageReceived: MessageReceivedEventCb;
+    onDataTrackMessageReceived: TwilioSubscription<MessageReceivedEventCb>;
 
-    onStatsReceived: StatsReceivedEventCb;
+    onStatsReceived: TwilioSubscription<StatsReceivedEventCb>;
   }
 
   const TwilioVideo: ITwilioVideo;
