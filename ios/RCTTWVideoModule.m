@@ -348,7 +348,7 @@ RCT_EXPORT_METHOD(getStats) {
                 }
             }
 
-RCT_EXPORT_METHOD(requestStats:(int)intervalMs) {
+RCT_EXPORT_METHOD(requestStats:(double)intervalMs) {
     [self.getStatsTimer invalidate];
     self.getStatsTimer = [NSTimer scheduledTimerWithTimeInterval: intervalMs / 1000
                                                           target: self
