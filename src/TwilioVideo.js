@@ -164,6 +164,21 @@ class TwilioVideo {
   };
 
   /**
+   * Request stats with specified interval (subsequent calls will overwrite previous interval)
+   * Results will be received in onStatsReceived callback
+   */
+  requestStats = (intervalMs: number) => {
+    this.nativeModule.requestStats(intervalMs);
+  }
+
+  /**
+   * Stop all stats requests
+   */
+  cancelStatsRequest = () => {
+    this.nativeModule.cancelStatsRequest();
+  }
+
+  /**
    * SendString to datatrack
    * @param  {String} message    The message string to send
    */
