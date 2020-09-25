@@ -116,6 +116,9 @@ RCT_EXPORT_MODULE();
 }
 
 - (void)addLocalView:(TVIVideoView *)view {
+    if (self.localVideoTrack == nil) {
+        [self startLocalVideo];
+    }
     [self.localVideoTrack addRenderer:view];
     [self updateLocalViewMirroring:view];
 }
