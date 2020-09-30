@@ -185,7 +185,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     private final Map<String, Pair<RemoteDataTrack, RemoteParticipant>> remoteDataTrackMap =
             new HashMap<>();
 
-    private final TimerTask requestStatsTask = new TimerTask() {
+    private class RequestStatsTask extends TimerTask {
         @Override
         public void run() {
             if (room != null) {
@@ -689,7 +689,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             requestStatsTimer.cancel();
         }
         requestStatsTimer = new Timer();
-        requestStatsTimer.scheduleAtFixedRate(requestStatsTask, 0, intervalMs);
+        requestStatsTimer.scheduleAtFixedRate(new RequestStatsTask(), 0, intervalMs);
     }
 
     @ReactMethod
