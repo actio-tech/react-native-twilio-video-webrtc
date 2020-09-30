@@ -17,6 +17,7 @@ import android.media.AudioManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 
+import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringDef;
 
@@ -414,19 +415,22 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         this.accessToken = accessToken;
         this.enableRemoteAudio = enableAudio;
 
-        // Share your microphone
-        localAudioTrack = LocalAudioTrack.create(getContext(), enableAudio);
+        mainHandler.post(() -> {
+            // Share your microphone
+            localAudioTrack = LocalAudioTrack.create(getContext(), enableAudio);
 
-        if (enableVideo && cameraCapturer == null) {
-            boolean createVideoStatus = createLocalVideo(enableVideo);
-            if (!createVideoStatus) {
-                // No need to connect to room if video creation failed
-                return;
+            if (enableVideo && cameraCapturer == null) {
+                boolean createVideoStatus = createLocalVideo(enableVideo);
+                if (!createVideoStatus) {
+                    // No need to connect to room if video creation failed
+                    return;
+                }
             }
-        }
-        connectToRoom(enableAudio);
+            connectToRoom(enableAudio);
+        });
     }
 
+    @MainThread
     private void connectToRoom(boolean enableAudio) {
         /*
          * Create a VideoClient allowing you to connect to a Room
@@ -458,73 +462,74 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         room = Video.connect(getContext(), connectOptionsBuilder.build(), roomListener());
     }
 
+    @MainThread
     private void setAudioFocus(boolean focus) {
-        mainHandler.post(() -> {
-            if (focus) {
-                audioSwitch.start((audioDevices, audioDevice) -> {
-                    mainHandler.post(() -> {
-                        AudioDevice bluetoothHeadset = null;
-                        AudioDevice wiredHeadset = null;
-                        AudioDevice speakerphone = null;
-                        AudioDevice fallback = audioDevices.get(0);
+        if (focus) {
+            audioSwitch.start((audioDevices, audioDevice) -> {
+                mainHandler.post(() -> {
+                    AudioDevice bluetoothHeadset = null;
+                    AudioDevice wiredHeadset = null;
+                    AudioDevice speakerphone = null;
+                    AudioDevice fallback = audioDevices.get(0);
 
-                        for (AudioDevice d : audioDevices) {
-                            if (d instanceof AudioDevice.BluetoothHeadset) {
-                                bluetoothHeadset = d;
-                            }
-
-                            if (d instanceof AudioDevice.WiredHeadset) {
-                                wiredHeadset = d;
-                            }
-
-                            if (d instanceof AudioDevice.Speakerphone) {
-                                speakerphone = d;
-                            }
+                    for (AudioDevice d : audioDevices) {
+                        if (d instanceof AudioDevice.BluetoothHeadset) {
+                            bluetoothHeadset = d;
                         }
 
-                        if (bluetoothHeadset != null) {
-                            audioSwitch.selectDevice(bluetoothHeadset);
-                        } else if (wiredHeadset != null) {
-                            audioSwitch.selectDevice(wiredHeadset);
-                        } else if (speakerphone != null) {
-                            audioSwitch.selectDevice(speakerphone);
-                        } else {
-                            audioSwitch.selectDevice(fallback);
+                        if (d instanceof AudioDevice.WiredHeadset) {
+                            wiredHeadset = d;
                         }
-                    });
 
-                    return Unit.INSTANCE;
+                        if (d instanceof AudioDevice.Speakerphone) {
+                            speakerphone = d;
+                        }
+                    }
+
+                    if (bluetoothHeadset != null) {
+                        audioSwitch.selectDevice(bluetoothHeadset);
+                    } else if (wiredHeadset != null) {
+                        audioSwitch.selectDevice(wiredHeadset);
+                    } else if (speakerphone != null) {
+                        audioSwitch.selectDevice(speakerphone);
+                    } else {
+                        audioSwitch.selectDevice(fallback);
+                    }
                 });
-                audioSwitch.activate();
-            } else {
-                audioSwitch.deactivate();
-                audioSwitch.stop();
-            }
-        });
+
+                return Unit.INSTANCE;
+            });
+            audioSwitch.activate();
+        } else {
+            audioSwitch.deactivate();
+            audioSwitch.stop();
+        }
     }
 
     // ====== DISCONNECTING ========================================================================
 
     @ReactMethod
     public void disconnect() {
-        cancelStatsRequest();
+        mainHandler.post(() -> {
+            cancelStatsRequest();
 
-        if (room != null) {
-            room.disconnect();
-        }
-        if (localAudioTrack != null) {
-            localAudioTrack.release();
-            localAudioTrack = null;
-        }
-        if (localVideoTrack != null) {
-            localVideoTrack.release();
-            localVideoTrack = null;
-        }
-        setAudioFocus(false);
-        if (cameraCapturer != null) {
-            cameraCapturer.stopCapture();
-            cameraCapturer = null;
-        }
+            if (room != null) {
+                room.disconnect();
+            }
+            if (localAudioTrack != null) {
+                localAudioTrack.release();
+                localAudioTrack = null;
+            }
+            if (localVideoTrack != null) {
+                localVideoTrack.release();
+                localVideoTrack = null;
+            }
+            setAudioFocus(false);
+            if (cameraCapturer != null) {
+                cameraCapturer.stopCapture();
+                cameraCapturer = null;
+            }
+        });
     }
 
     // ===== SEND STRING ON DATA TRACK ======================================================================
@@ -536,6 +541,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     }
 
     // ===== BUTTON LISTENERS ======================================================================
+    @MainThread
     private static void setThumbnailMirror() {
         if (cameraCapturer != null) {
             CameraCapturer.CameraSource cameraSource = cameraCapturer.getCameraSource();
@@ -548,71 +554,83 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void flipCamera() {
-        if (cameraCapturer != null) {
-            cameraCapturer.switchCamera();
-            CameraCapturer.CameraSource cameraSource = cameraCapturer.getCameraSource();
-            final boolean isBackCamera = cameraSource == CameraCapturer.CameraSource.BACK_CAMERA;
-            WritableMap event = new WritableNativeMap();
-            event.putBoolean("isBackCamera", isBackCamera);
-            pushEvent(ON_CAMERA_SWITCHED, event);
-        }
+        mainHandler.post(() -> {
+            if (cameraCapturer != null) {
+                cameraCapturer.switchCamera();
+                CameraCapturer.CameraSource cameraSource = cameraCapturer.getCameraSource();
+                final boolean isBackCamera = cameraSource == CameraCapturer.CameraSource.BACK_CAMERA;
+                WritableMap event = new WritableNativeMap();
+                event.putBoolean("isBackCamera", isBackCamera);
+                pushEvent(ON_CAMERA_SWITCHED, event);
+            }
+        });
     }
 
     @ReactMethod
     public void setLocalVideoEnabled(boolean enabled) {
-        if (localVideoTrack != null) {
-            localVideoTrack.enable(enabled);
+        mainHandler.post(() -> {
+            if (localVideoTrack != null) {
+                localVideoTrack.enable(enabled);
 
-            WritableMap event = new WritableNativeMap();
-            event.putBoolean("videoEnabled", enabled);
-            pushEvent(ON_VIDEO_CHANGED, event);
-        }
+                WritableMap event = new WritableNativeMap();
+                event.putBoolean("videoEnabled", enabled);
+                pushEvent(ON_VIDEO_CHANGED, event);
+            }
+        });
     }
 
     @ReactMethod
     public void toggleSoundSetup(boolean speaker) {
-        AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
-        if (speaker) {
-            audioManager.setSpeakerphoneOn(true);
-        } else {
-            audioManager.setSpeakerphoneOn(false);
-        }
+        mainHandler.post(() -> {
+            AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+            if (speaker) {
+                audioManager.setSpeakerphoneOn(true);
+            } else {
+                audioManager.setSpeakerphoneOn(false);
+            }
+        });
     }
 
     @ReactMethod
     public void setLocalAudioEnabled(boolean enabled) {
-        if (localAudioTrack != null) {
-            localAudioTrack.enable(enabled);
+        mainHandler.post(() -> {
+            if (localAudioTrack != null) {
+                localAudioTrack.enable(enabled);
 
-            WritableMap event = new WritableNativeMap();
-            event.putBoolean("audioEnabled", enabled);
-            pushEvent(ON_AUDIO_CHANGED, event);
-        }
+                WritableMap event = new WritableNativeMap();
+                event.putBoolean("audioEnabled", enabled);
+                pushEvent(ON_AUDIO_CHANGED, event);
+            }
+        });
     }
 
     @ReactMethod
     public void toggleBluetoothHeadset(boolean enabled) {
-        AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
-        if (enabled) {
-            audioManager.startBluetoothSco();
-        } else {
-            audioManager.stopBluetoothSco();
-        }
+        mainHandler.post(() -> {
+            AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+            if (enabled) {
+                audioManager.startBluetoothSco();
+            } else {
+                audioManager.stopBluetoothSco();
+            }
+        });
     }
 
     @ReactMethod
     public void setRemoteAudioEnabled(String participantSid, boolean enabled) {
-        if (room != null) {
-            for (RemoteParticipant rp : room.getRemoteParticipants()) {
-                if (rp.getSid().equals(participantSid)) {
-                    for (AudioTrackPublication at : rp.getAudioTracks()) {
-                        if (at.getAudioTrack() != null) {
-                            ((RemoteAudioTrack) at.getAudioTrack()).enablePlayback(enabled);
+        mainHandler.post(() -> {
+            if (room != null) {
+                for (RemoteParticipant rp : room.getRemoteParticipants()) {
+                    if (rp.getSid().equals(participantSid)) {
+                        for (AudioTrackPublication at : rp.getAudioTracks()) {
+                            if (at.getAudioTrack() != null) {
+                                ((RemoteAudioTrack) at.getAudioTrack()).enablePlayback(enabled);
+                            }
                         }
                     }
                 }
             }
-        }
+        });
     }
 
     private void convertBaseTrackStats(BaseTrackStats bs, WritableMap result) {
