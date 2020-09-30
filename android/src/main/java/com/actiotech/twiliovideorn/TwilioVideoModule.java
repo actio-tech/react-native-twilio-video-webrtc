@@ -20,6 +20,7 @@ import android.os.HandlerThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringDef;
 
+import android.os.Looper;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
@@ -195,6 +196,8 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
 
     private Timer requestStatsTimer = new Timer();
 
+    private final Handler mainHandler;
+
     @NonNull
     @Override
     public String getName() {
@@ -232,6 +235,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         dataTrackMessageThread.start();
         dataTrackMessageThreadHandler = new Handler(dataTrackMessageThread.getLooper());
 
+        mainHandler = new Handler(Looper.getMainLooper());
     }
 
     @Override
@@ -455,44 +459,48 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     }
 
     private void setAudioFocus(boolean focus) {
-        if (focus) {
-            audioSwitch.start((audioDevices, audioDevice) -> {
-                AudioDevice bluetoothHeadset = null;
-                AudioDevice wiredHeadset = null;
-                AudioDevice speakerphone = null;
-                AudioDevice fallback = audioDevices.get(0);
+        mainHandler.post(() -> {
+            if (focus) {
+                audioSwitch.start((audioDevices, audioDevice) -> {
+                    mainHandler.post(() -> {
+                        AudioDevice bluetoothHeadset = null;
+                        AudioDevice wiredHeadset = null;
+                        AudioDevice speakerphone = null;
+                        AudioDevice fallback = audioDevices.get(0);
 
-                for (AudioDevice d : audioDevices) {
-                    if (d instanceof AudioDevice.BluetoothHeadset) {
-                        bluetoothHeadset = d;
-                    }
+                        for (AudioDevice d : audioDevices) {
+                            if (d instanceof AudioDevice.BluetoothHeadset) {
+                                bluetoothHeadset = d;
+                            }
 
-                    if (d instanceof AudioDevice.WiredHeadset) {
-                        wiredHeadset = d;
-                    }
+                            if (d instanceof AudioDevice.WiredHeadset) {
+                                wiredHeadset = d;
+                            }
 
-                    if (d instanceof AudioDevice.Speakerphone) {
-                        speakerphone = d;
-                    }
-                }
+                            if (d instanceof AudioDevice.Speakerphone) {
+                                speakerphone = d;
+                            }
+                        }
 
-                if (bluetoothHeadset != null) {
-                    audioSwitch.selectDevice(bluetoothHeadset);
-                } else if (wiredHeadset != null) {
-                    audioSwitch.selectDevice(wiredHeadset);
-                } else if (speakerphone != null) {
-                    audioSwitch.selectDevice(speakerphone);
-                } else {
-                    audioSwitch.selectDevice(fallback);
-                }
+                        if (bluetoothHeadset != null) {
+                            audioSwitch.selectDevice(bluetoothHeadset);
+                        } else if (wiredHeadset != null) {
+                            audioSwitch.selectDevice(wiredHeadset);
+                        } else if (speakerphone != null) {
+                            audioSwitch.selectDevice(speakerphone);
+                        } else {
+                            audioSwitch.selectDevice(fallback);
+                        }
+                    });
 
-                return Unit.INSTANCE;
-            });
-            audioSwitch.activate();
-        } else {
-            audioSwitch.deactivate();
-            audioSwitch.stop();
-        }
+                    return Unit.INSTANCE;
+                });
+                audioSwitch.activate();
+            } else {
+                audioSwitch.deactivate();
+                audioSwitch.stop();
+            }
+        });
     }
 
     // ====== DISCONNECTING ========================================================================
