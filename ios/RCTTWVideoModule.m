@@ -367,12 +367,12 @@ RCT_EXPORT_METHOD(cancelStatsRequest) {
 RCT_EXPORT_METHOD(connect:(NSString *)roomName accessToken:(NSString *)accessToken options:(NSDictionary *)options) {
     self.remoteDataTrackMap = [NSMutableDictionary new];
     
-    if (options[@"enableVideo"] && self.localVideoTrack == nil) {
+    if (options[@"enableVideo"] && [options[@"enableVideo"] boolValue] && self.localVideoTrack == nil) {
         // We disabled video in a previous call, attempt to re-enable
         [self startLocalVideo];
     }
     
-    if (options[@"enableAudio"] && self.localAudioTrack == nil) {
+    if (options[@"enableAudio"] && [options[@"enableAudio"] boolValue] && self.localAudioTrack == nil) {
         [self startLocalAudio];
     }
     
