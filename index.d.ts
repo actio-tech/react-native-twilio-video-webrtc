@@ -171,11 +171,21 @@ declare module 'react-native-twilio-video-webrtc' {
 
   export type TwilioSubscription<CFunc> = (f: CFunc) => EmitterSubscription;
 
+  export interface ConnectionOptions {
+    enableAudio?: boolean;
+    enableVideo?: boolean;
+    enableRemoteAudio?: boolean;
+    enableH264Codec?: boolean;
+    // if audioBitrate OR videoBitrate is provided, you must provide both
+    audioBitrate?: number;
+    videoBitrate?: number;
+  }
+
   interface ITwilioVideo {
     connect: (
       roomName: string,
       accessToken: string,
-      options: iOSConnectParams | androidConnectParams,
+      options: ConnectionOptions,
     ) => void;
 
     disconnect: () => void;
