@@ -61,6 +61,12 @@ export default class extends React.PureComponent {
      */
     onParticipantRemovedVideoTrack: PropTypes.func,
     /**
+     * Called when a audio track has been removed
+     *
+     * @param {{participant, track, error}}
+     */
+    onParticipantFailedToSubscribeToVideoTrack: PropTypes.func,
+    /**
      * Called when a new data track has been added
      *
      * @param {{participant, track}}
@@ -73,6 +79,12 @@ export default class extends React.PureComponent {
      */
     onParticipantRemovedDataTrack: PropTypes.func,
     /**
+     * Called when a audio track has been removed
+     *
+     * @param {{participant, track, error}}
+     */
+    onParticipantFailedToSubscribeToDataTrack: PropTypes.func,
+    /**
      * Called when a new audio track has been added
      *
      * @param {{participant, track}}
@@ -84,6 +96,12 @@ export default class extends React.PureComponent {
      * @param {{participant, track}}
      */
     onParticipantRemovedAudioTrack: PropTypes.func,
+    /**
+     * Called when a audio track has been removed
+     *
+     * @param {{participant, track, error}}
+     */
+    onParticipantFailedToSubscribeToAudioTrack: PropTypes.func,
     /**
      * Called when an dataTrack receives a message
      *
@@ -249,6 +267,21 @@ export default class extends React.PureComponent {
       TwilioVideo.onParticipantRemovedAudioTrack((data) => {
         if (this.props.onParticipantRemovedAudioTrack) {
           this.props.onParticipantRemovedAudioTrack(data);
+        }
+      }),
+      TwilioVideo.onParticipantFailedToSubscribeToAudioTrack((data) => {
+        if (this.props.onParticipantFailedToSubscribeToAudioTrack) {
+          this.props.onParticipantFailedToSubscribeToAudioTrack(data);
+        }
+      }),
+      TwilioVideo.onParticipantFailedToSubscribeToDataTrack((data) => {
+        if (this.props.onParticipantFailedToSubscribeToDataTrack) {
+          this.props.onParticipantFailedToSubscribeToDataTrack(data);
+        }
+      }),
+      TwilioVideo.onParticipantFailedToSubscribeToVideoTrack((data) => {
+        if (this.props.onParticipantFailedToSubscribeToVideoTrack) {
+          this.props.onParticipantFailedToSubscribeToVideoTrack(data);
         }
       }),
       TwilioVideo.onDataTrackMessageReceived((data) => {

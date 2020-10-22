@@ -99,7 +99,12 @@ declare module 'react-native-twilio-video-webrtc' {
     track: Track;
   }
 
+  type TrackErrorEventCbArgs = TrackEventCbArgs & {
+    error?: TwilioError;
+  };
+
   export type TrackEventCb = (t: TrackEventCbArgs) => void;
+  export type TrackErrorEventCb = (t: TrackErrorEventCbArgs) => void;
 
   interface RoomEventCommonArgs {
     roomName: string;
@@ -216,19 +221,23 @@ declare module 'react-native-twilio-video-webrtc' {
 
     onRoomParticipantDidDisconnect: TwilioSubscription<ParticipantEventCb>;
 
+    onParticipantAddedAudioTrack: TwilioSubscription<TrackEventCb>;
+
+    onParticipantRemovedAudioTrack: TwilioSubscription<TrackEventCb>;
+
+    onParticipantFailedToSubscribeToAudioTrack: TwilioSubscription<TrackErrorEventCb>;
+
     onParticipantAddedVideoTrack: TwilioSubscription<TrackEventCb>;
+
+    onParticipantRemovedVideoTrack: TwilioSubscription<TrackEventCb>;
+
+    onParticipantFailedToSubscribeToVideoTrack: TwilioSubscription<TrackErrorEventCb>;
 
     onParticipantAddedDataTrack: TwilioSubscription<TrackEventCb>;
 
     onParticipantRemovedDataTrack: TwilioSubscription<TrackEventCb>;
 
-    onParticipantRemovedVideoTrack: TwilioSubscription<TrackEventCb>;
-
-    onParticipantAddedAudioTrack: TwilioSubscription<TrackEventCb>;
-
-    onParticipantRemovedAudioTrack: TwilioSubscription<TrackEventCb>;
-
-    onParticipantRemovedDataTrack: TwilioSubscription<TrackEventCb>;
+    onParticipantFailedToSubscribeToDataTrack: TwilioSubscription<TrackErrorEventCb>;
 
     onDataTrackMessageReceived: TwilioSubscription<MessageReceivedEventCb>;
 
@@ -251,6 +260,10 @@ declare module 'react-native-twilio-video-webrtc' {
     onParticipantRemovedAudioTrack?: TrackEventCb;
     onParticipantRemovedVideoTrack?: TrackEventCb;
     onParticipantRemovedDataTrack?: TrackEventCb;
+    onParticipantFailedToSubscribeToAudioTrack?: TrackErrorEventCb;
+    onParticipantFailedToSubscribeToVideoTrack?: TrackErrorEventCb;
+    onParticipantFailedToSubscribeToDataTrack?: TrackErrorEventCb;
+
     onRoomDidConnect?: RoomEventCb;
     onRoomDidDisconnect?: RoomErrorEventCb;
     onRoomDidFailToConnect?: RoomErrorEventCb;

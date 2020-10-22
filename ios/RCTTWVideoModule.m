@@ -16,12 +16,18 @@ static NSString* roomDidFailToConnect         = @"TwilioVideo.onRoomDidFailToCon
 static NSString* roomParticipantDidConnect    = @"TwilioVideo.onRoomParticipantDidConnect";
 static NSString* roomParticipantDidDisconnect = @"TwilioVideo.onRoomParticipantDidDisconnect";
 
-static NSString* participantAddedVideoTrack   = @"TwilioVideo.onParticipantAddedVideoTrack";
-static NSString* participantRemovedVideoTrack = @"TwilioVideo.onParticipantRemovedVideoTrack";
-static NSString* participantAddedDataTrack   = @"TwilioVideo.onParticipantAddedDataTrack";
-static NSString* participantRemovedDataTrack   = @"TwilioVideo.onParticipantRemovedDataTrack";
 static NSString* participantAddedAudioTrack   = @"TwilioVideo.onParticipantAddedAudioTrack";
 static NSString* participantRemovedAudioTrack = @"TwilioVideo.onParticipantRemovedAudioTrack";
+static NSString* participantFailedToSubscribeToAudioTrack = @"TwilioVideo.onParticipantFailedToSubscribeToAudioTrack";
+
+static NSString* participantAddedVideoTrack   = @"TwilioVideo.onParticipantAddedVideoTrack";
+static NSString* participantRemovedVideoTrack = @"TwilioVideo.onParticipantRemovedVideoTrack";
+static NSString* participantFailedToSubscribeToVideoTrack = @"TwilioVideo.onParticipantFailedToSubscribeToVideoTrack";
+
+static NSString* participantAddedDataTrack   = @"TwilioVideo.onParticipantAddedDataTrack";
+static NSString* participantRemovedDataTrack   = @"TwilioVideo.onParticipantRemovedDataTrack";
+static NSString* participantFailedToSubscribeToDataTrack = @"TwilioVideo.onParticipantFailedToSubscribeToDataTrack";
+
 static NSString* participantEnabledVideoTrack      = @"TwilioVideo.onParticipantEnabledVideoTrack";
 static NSString* participantDisabledVideoTrack     = @"TwilioVideo.onParticipantDisabledVideoTrack";
 static NSString* participantEnabledAudioTrack      = @"TwilioVideo.onParticipantEnabledAudioTrack";
@@ -137,10 +143,13 @@ RCT_EXPORT_MODULE();
         roomParticipantDidDisconnect,
         participantAddedVideoTrack,
         participantRemovedVideoTrack,
+        participantFailedToSubscribeToVideoTrack,
         participantAddedDataTrack,
         participantRemovedDataTrack,
+        participantFailedToSubscribeToDataTrack,
         participantAddedAudioTrack,
         participantRemovedAudioTrack,
+        participantFailedToSubscribeToAudioTrack,
         participantEnabledVideoTrack,
         participantDisabledVideoTrack,
         participantEnabledAudioTrack,
@@ -543,6 +552,16 @@ RCT_EXPORT_METHOD(disconnect) {
     [self sendEventCheckingListenerWithName:participantRemovedDataTrack body:@{ @"participant": [participant toJSON], @"track": [publication toJSON] }];
 }
 
+- (void)didFailToSubscribeToDataTrack:(TVIRemoteDataTrackPublication *)publication error:(NSError *)error forParticipant:(TVIRemoteParticipant *)participant {
+    NSMutableDictionary *body = [@{ @"participant": [participant toJSON], @"track": [publication toJSON] } mutableCopy];
+    
+    if (error) {
+        [body addEntriesFromDictionary:@{ @"error" : @{ @"message": error.localizedDescription, @"code": @(error.code) } }];
+    }
+
+    [self sendEventCheckingListenerWithName:participantFailedToSubscribeToDataTrack body:body];
+}
+
 - (void)didSubscribeToVideoTrack:(TVIRemoteVideoTrack *)videoTrack publication:(TVIRemoteVideoTrackPublication *)publication forParticipant:(TVIRemoteParticipant *)participant {
     [self sendEventCheckingListenerWithName:participantAddedVideoTrack body:@{ @"participant": [participant toJSON], @"track": [publication toJSON] }];
 }
@@ -551,12 +570,32 @@ RCT_EXPORT_METHOD(disconnect) {
     [self sendEventCheckingListenerWithName:participantRemovedVideoTrack body:@{ @"participant": [participant toJSON], @"track": [publication toJSON] }];
 }
 
+- (void)didFailToSubscribeToVideoTrack:(TVIRemoteVideoTrackPublication *)publication error:(NSError *)error forParticipant:(TVIRemoteParticipant *)participant {
+    NSMutableDictionary *body = [@{ @"participant": [participant toJSON], @"track": [publication toJSON] } mutableCopy];
+    
+    if (error) {
+        [body addEntriesFromDictionary:@{ @"error" : @{ @"message": error.localizedDescription, @"code": @(error.code) } }];
+    }
+
+    [self sendEventCheckingListenerWithName:participantFailedToSubscribeToVideoTrack body:body];
+}
+
 - (void)didSubscribeToAudioTrack:(TVIRemoteAudioTrack *)audioTrack publication:(TVIRemoteAudioTrackPublication *)publication forParticipant:(TVIRemoteParticipant *)participant {
     [self sendEventCheckingListenerWithName:participantAddedAudioTrack body:@{ @"participant": [participant toJSON], @"track": [publication toJSON] }];
 }
 
 - (void)didUnsubscribeFromAudioTrack:(TVIRemoteAudioTrack *)audioTrack publication:(TVIRemoteAudioTrackPublication *)publication forParticipant:(TVIRemoteParticipant *)participant {
     [self sendEventCheckingListenerWithName:participantRemovedAudioTrack body:@{ @"participant": [participant toJSON], @"track": [publication toJSON] }];
+}
+
+- (void)didFailToSubscribeToAudioTrack:(TVIRemoteAudioTrackPublication *)publication error:(NSError *)error forParticipant:(TVIRemoteParticipant *)participant {
+    NSMutableDictionary *body = [@{ @"participant": [participant toJSON], @"track": [publication toJSON] } mutableCopy];
+    
+    if (error) {
+        [body addEntriesFromDictionary:@{ @"error" : @{ @"message": error.localizedDescription, @"code": @(error.code) } }];
+    }
+
+    [self sendEventCheckingListenerWithName:participantFailedToSubscribeToAudioTrack body:body];
 }
 
 - (void)remoteParticipant:(TVIRemoteParticipant *)participant didEnableVideoTrack:(TVIRemoteVideoTrackPublication *)publication {

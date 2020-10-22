@@ -167,7 +167,7 @@ class TwilioVideo {
    * Request stats with specified interval (subsequent calls will overwrite previous interval)
    * Results will be received in onStatsReceived callback
    */
-  requestStats = (intervalMs: number) => {
+  requestStats = (intervalMs) => {
     this.nativeModule.requestStats(intervalMs);
   }
 
@@ -218,33 +218,7 @@ class TwilioVideo {
     );
   };
 
-  onParticipantAddedVideoTrack = callback => {
-    return this.eventEmitter.addListener(
-      'TwilioVideo.onParticipantAddedVideoTrack',
-      callback,
-    );
-  };
-
-  onParticipantAddedDataTrack = callback => {
-    return this.eventEmitter.addListener(
-      'TwilioVideo.onParticipantAddedDataTrack',
-      callback,
-    );
-  };
-
-  onParticipantRemovedDataTrack = callback => {
-    return this.eventEmitter.addListener(
-      'TwilioVideo.onParticipantRemovedDataTrack',
-      callback,
-    );
-  };
-
-  onParticipantRemovedVideoTrack = callback => {
-    return this.eventEmitter.addListener(
-      'TwilioVideo.onParticipantRemovedVideoTrack',
-      callback,
-    );
-  };
+  // Audio tracks
 
   onParticipantAddedAudioTrack = callback => {
     return this.eventEmitter.addListener(
@@ -260,6 +234,46 @@ class TwilioVideo {
     );
   };
 
+  onParticipantFailedToSubscribeToAudioTrack = callback => {
+    return this.eventEmitter.addListener(
+      'TwilioVideo.onParticipantFailedToSubscribeToAudioTrack',
+      callback,
+    );
+  }
+
+
+  // Video tracks
+
+  onParticipantAddedVideoTrack = callback => {
+    return this.eventEmitter.addListener(
+      'TwilioVideo.onParticipantAddedVideoTrack',
+      callback,
+    );
+  };
+
+  onParticipantRemovedVideoTrack = callback => {
+    return this.eventEmitter.addListener(
+      'TwilioVideo.onParticipantRemovedVideoTrack',
+      callback,
+    );
+  };
+
+  onParticipantFailedToSubscribeToVideoTrack = callback => {
+    return this.eventEmitter.addListener(
+      'TwilioVideo.onParticipantFailedToSubscribeToVideoTrack',
+      callback,
+    );
+  }
+
+  // Data tracks
+
+  onParticipantAddedDataTrack = callback => {
+    return this.eventEmitter.addListener(
+      'TwilioVideo.onParticipantAddedDataTrack',
+      callback,
+    );
+  };
+
   onParticipantRemovedDataTrack = callback => {
     return this.eventEmitter.addListener(
       'TwilioVideo.onParticipantRemovedDataTrack',
@@ -267,12 +281,21 @@ class TwilioVideo {
     );
   };
 
+  onParticipantFailedToSubscribeToDataTrack = callback => {
+    return this.eventEmitter.addListener(
+      'TwilioVideo.onParticipantFailedToSubscribeToDataTrack',
+      callback
+    );
+  }
+
   onDataTrackMessageReceived = callback => {
     return this.eventEmitter.addListener(
       'TwilioVideo.onDataTrackMessageReceived',
       callback,
     );
   };
+
+  // Stats
 
   onStatsReceived = callback => {
     return this.eventEmitter.addListener('TwilioVideo.onStatsReceived', callback);

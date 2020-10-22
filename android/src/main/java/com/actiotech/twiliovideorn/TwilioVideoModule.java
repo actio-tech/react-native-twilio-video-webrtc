@@ -96,6 +96,9 @@ import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPAN
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPANT_DISCONNECTED;
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPANT_ENABLED_AUDIO_TRACK;
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPANT_ENABLED_VIDEO_TRACK;
+import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPANT_FAILED_TO_SUBSCRIBE_TO_AUDIO_TRACK;
+import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPANT_FAILED_TO_SUBSCRIBE_TO_DATA_TRACK;
+import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPANT_FAILED_TO_SUBSCRIBE_TO_VIDEO_TRACK;
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPANT_REMOVED_DATA_TRACK;
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPANT_REMOVED_AUDIO_TRACK;
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPANT_REMOVED_VIDEO_TRACK;
@@ -117,11 +120,14 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             Events.ON_PARTICIPANT_CONNECTED,
             Events.ON_PARTICIPANT_DISCONNECTED,
             Events.ON_PARTICIPANT_ADDED_VIDEO_TRACK,
+            Events.ON_PARTICIPANT_FAILED_TO_SUBSCRIBE_TO_VIDEO_TRACK,
             Events.ON_DATATRACK_MESSAGE_RECEIVED,
             Events.ON_PARTICIPANT_ADDED_DATA_TRACK,
             Events.ON_PARTICIPANT_REMOVED_DATA_TRACK,
+            Events.ON_PARTICIPANT_FAILED_TO_SUBSCRIBE_TO_DATA_TRACK,
             Events.ON_PARTICIPANT_REMOVED_VIDEO_TRACK,
             Events.ON_PARTICIPANT_ADDED_AUDIO_TRACK,
+            Events.ON_PARTICIPANT_FAILED_TO_SUBSCRIBE_TO_AUDIO_TRACK,
             Events.ON_PARTICIPANT_REMOVED_AUDIO_TRACK,
             Events.ON_PARTICIPANT_ENABLED_VIDEO_TRACK,
             Events.ON_PARTICIPANT_DISABLED_VIDEO_TRACK,
@@ -140,10 +146,13 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         String ON_DATATRACK_MESSAGE_RECEIVED = "TwilioVideo.onDataTrackMessageReceived";
         String ON_PARTICIPANT_ADDED_DATA_TRACK = "TwilioVideo.onParticipantAddedDataTrack";
         String ON_PARTICIPANT_REMOVED_DATA_TRACK = "TwilioVideo.onParticipantRemovedDataTrack";
+        String ON_PARTICIPANT_FAILED_TO_SUBSCRIBE_TO_DATA_TRACK = "TwilioVideo.onParticipantFailedToSubscribeToDataTrack";
         String ON_PARTICIPANT_ADDED_VIDEO_TRACK = "TwilioVideo.onParticipantAddedVideoTrack";
         String ON_PARTICIPANT_REMOVED_VIDEO_TRACK = "TwilioVideo.onParticipantRemovedVideoTrack";
+        String ON_PARTICIPANT_FAILED_TO_SUBSCRIBE_TO_VIDEO_TRACK = "TwilioVideo.onParticipantFailedToSubscribeToVideoTrack";
         String ON_PARTICIPANT_ADDED_AUDIO_TRACK = "TwilioVideo.onParticipantAddedAudioTrack";
         String ON_PARTICIPANT_REMOVED_AUDIO_TRACK = "TwilioVideo.onParticipantRemovedAudioTrack";
+        String ON_PARTICIPANT_FAILED_TO_SUBSCRIBE_TO_AUDIO_TRACK = "TwilioVideo.onParticipantFailedToSubscribeToAudioTrack";
         String ON_PARTICIPANT_ENABLED_VIDEO_TRACK = "TwilioVideo.onParticipantEnabledVideoTrack";
         String ON_PARTICIPANT_DISABLED_VIDEO_TRACK = "TwilioVideo.onParticipantDisabledVideoTrack";
         String ON_PARTICIPANT_ENABLED_AUDIO_TRACK = "TwilioVideo.onParticipantEnabledAudioTrack";
@@ -193,7 +202,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
                 room.getStats(TwilioVideoModule.this);
             }
         }
-    };
+    }
 
     private Timer requestStatsTimer = new Timer();
 
@@ -901,7 +910,8 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
 
             @Override
             public void onAudioTrackSubscriptionFailed(RemoteParticipant participant, RemoteAudioTrackPublication publication, TwilioException twilioException) {
-
+                WritableMap event = buildTrackSubscriptionFailedEvent(participant, publication, twilioException);
+                pushEvent(ON_PARTICIPANT_FAILED_TO_SUBSCRIBE_TO_AUDIO_TRACK, event);
             }
 
             @Override
@@ -930,7 +940,8 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
 
             @Override
             public void onDataTrackSubscriptionFailed(RemoteParticipant participant, RemoteDataTrackPublication publication, TwilioException twilioException) {
-
+                WritableMap event = buildTrackSubscriptionFailedEvent(participant, publication, twilioException);
+                pushEvent(ON_PARTICIPANT_FAILED_TO_SUBSCRIBE_TO_DATA_TRACK, event);
             }
 
             @Override
@@ -955,6 +966,8 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
 
             @Override
             public void onVideoTrackSubscriptionFailed(RemoteParticipant participant, RemoteVideoTrackPublication publication, TwilioException twilioException) {
+                WritableMap event = buildTrackSubscriptionFailedEvent(participant, publication, twilioException);
+                pushEvent(ON_PARTICIPANT_FAILED_TO_SUBSCRIBE_TO_VIDEO_TRACK, event);
             }
 
             @Override
@@ -1023,6 +1036,26 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         WritableMap event = new WritableNativeMap();
         event.putMap("participant", participantMap);
         event.putMap("track", trackMap);
+        return event;
+    }
+
+    private WritableMap buildTrackSubscriptionFailedEvent(Participant participant, TrackPublication publication, TwilioException twilioException) {
+        WritableMap participantMap = buildParticipant(participant);
+
+        WritableMap trackMap = new WritableNativeMap();
+        trackMap.putString("trackSid", publication.getTrackSid());
+        trackMap.putString("trackName", publication.getTrackName());
+        trackMap.putBoolean("enabled", publication.isTrackEnabled());
+
+        WritableMap event = new WritableNativeMap();
+        event.putMap("participant", participantMap);
+        event.putMap("track", trackMap);
+
+        WritableMap error = new WritableNativeMap();
+        error.putString("message", twilioException.getMessage());
+        error.putInt("code", twilioException.getCode());
+        event.putMap("error", error);
+
         return event;
     }
 
