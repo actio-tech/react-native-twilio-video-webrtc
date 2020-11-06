@@ -9,6 +9,7 @@
 package com.actiotech.twiliovideorn;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -235,7 +236,12 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
          * Needed for setting/abandoning audio focus during call
          */
         audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        audioSwitch = new AudioSwitch(context);
+        List<Class<? extends AudioDevice>> preferredDevicesList = Arrays.asList(
+            AudioDevice.BluetoothHeadset.class,
+            AudioDevice.WiredHeadset.class,
+            AudioDevice.Speakerphone.class
+        );
+        audioSwitch = new AudioSwitch(context, false, (int a) -> {}, preferredDevicesList);
 
         // Create the local data track
         // localDataTrack = LocalDataTrack.create(this);
@@ -475,37 +481,6 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     private void setAudioFocus(boolean focus) {
         if (focus) {
             audioSwitch.start((audioDevices, audioDevice) -> {
-                mainHandler.post(() -> {
-                    AudioDevice bluetoothHeadset = null;
-                    AudioDevice wiredHeadset = null;
-                    AudioDevice speakerphone = null;
-                    AudioDevice fallback = audioDevices.get(0);
-
-                    for (AudioDevice d : audioDevices) {
-                        if (d instanceof AudioDevice.BluetoothHeadset) {
-                            bluetoothHeadset = d;
-                        }
-
-                        if (d instanceof AudioDevice.WiredHeadset) {
-                            wiredHeadset = d;
-                        }
-
-                        if (d instanceof AudioDevice.Speakerphone) {
-                            speakerphone = d;
-                        }
-                    }
-
-                    if (bluetoothHeadset != null) {
-                        audioSwitch.selectDevice(bluetoothHeadset);
-                    } else if (wiredHeadset != null) {
-                        audioSwitch.selectDevice(wiredHeadset);
-                    } else if (speakerphone != null) {
-                        audioSwitch.selectDevice(speakerphone);
-                    } else {
-                        audioSwitch.selectDevice(fallback);
-                    }
-                });
-
                 return Unit.INSTANCE;
             });
             audioSwitch.activate();
