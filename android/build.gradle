@@ -48,7 +48,7 @@ dependencies {
     def androidSupportVersion = rootProject.hasProperty("androidSupportVersion")  ? rootProject.androidSupportVersion : DEFAULT_ANDROID_SUPPORT_VERSION
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "com.twilio:audioswitch:1.0.0"
+    implementation "com.twilio:audioswitch:1.1.1"
     implementation "com.android.support:appcompat-v7:$androidSupportVersion"
     implementation "com.twilio:video-android:5.10.1"
     implementation 'org.webrtc:google-webrtc:1.0.+'
