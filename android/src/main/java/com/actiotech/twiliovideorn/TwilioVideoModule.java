@@ -186,8 +186,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     private boolean disconnectedFromOnDestroy;
 
     // Dedicated thread and handler for messages received from a RemoteDataTrack
-    private final HandlerThread dataTrackMessageThread =
-            new HandlerThread(DATA_TRACK_MESSAGE_THREAD_NAME);
+    private HandlerThread dataTrackMessageThread;
     private Handler dataTrackMessageThreadHandler;
 
     private LocalDataTrack localDataTrack;
@@ -246,10 +245,6 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         // Create the local data track
         // localDataTrack = LocalDataTrack.create(this);
         localDataTrack = LocalDataTrack.create(context);
-
-        // Start the thread where data messages are received
-        dataTrackMessageThread.start();
-        dataTrackMessageThreadHandler = new Handler(dataTrackMessageThread.getLooper());
 
         mainHandler = new Handler(Looper.getMainLooper());
     }
@@ -404,10 +399,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             localAudioTrack = null;
         }
 
-        // Quit the data track message thread
-        dataTrackMessageThread.quit();
-
-
+        quitDataTrackThread();
     }
 
     public void releaseResource() {
@@ -431,6 +423,8 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         this.enableRemoteAudio = enableAudio;
 
         mainHandler.post(() -> {
+            createDataTrackThread();
+
             // Share your microphone
             localAudioTrack = LocalAudioTrack.create(getContext(), enableAudio);
 
@@ -495,6 +489,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     @ReactMethod
     public void disconnect() {
         mainHandler.post(() -> {
+            quitDataTrackThread();
             cancelStatsRequest();
 
             if (room != null) {
@@ -1133,5 +1128,22 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             event.putMap(sr.getPeerConnectionId(), connectionStats);
         }
         pushEvent(ON_STATS_RECEIVED, event);
+    }
+
+    private void createDataTrackThread() {
+        quitDataTrackThread();
+
+        dataTrackMessageThread =
+                new HandlerThread(DATA_TRACK_MESSAGE_THREAD_NAME);
+        // Start the thread where data messages are received
+        dataTrackMessageThread.start();
+        dataTrackMessageThreadHandler = new Handler(dataTrackMessageThread.getLooper());
+    }
+
+    private void quitDataTrackThread() {
+        if (dataTrackMessageThread != null) {
+            dataTrackMessageThread.quit();
+            dataTrackMessageThread = null;
+        }
     }
 }
