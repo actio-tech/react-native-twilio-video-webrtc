@@ -41,11 +41,9 @@ static NSString* cameraDidStopRunning         = @"TwilioVideo.onCameraDidStopRun
 static NSString* statsReceived                = @"TwilioVideo.onStatsReceived";
 static NSString* networkQualityLevelsChanged  = @"TwilioVideo.onNetworkQualityLevelsChanged";
 
-static const CMVideoDimensions kRCTTWVideoAppCameraSourceDimensions = (CMVideoDimensions){900, 720};
+static const CMVideoDimensions desiredDimensions = (CMVideoDimensions){1280, 720};
 
-static const int32_t kRCTTWVideoCameraSourceFrameRate = 15;
-
-TVIVideoFormat *RCTTWVideoModuleCameraSourceSelectVideoFormatBySize(AVCaptureDevice *device, CMVideoDimensions targetSize) {
+TVIVideoFormat *getClosestCameraFormat(AVCaptureDevice *device, CMVideoDimensions targetSize) {
     TVIVideoFormat *selectedFormat = nil;
     // Ordered from smallest to largest.
     NSOrderedSet<TVIVideoFormat *> *formats = [TVICameraSource supportedFormatsForDevice:device];
@@ -219,7 +217,8 @@ RCT_EXPORT_METHOD(startLocalVideo) {
     }
     self.localVideoTrack = [TVILocalVideoTrack trackWithSource:self.camera enabled:YES name:@"camera"];
     AVCaptureDevice *camera = [TVICameraSource captureDeviceForPosition:AVCaptureDevicePositionFront];
-    [self.camera startCaptureWithDevice:camera completion:^(AVCaptureDevice *device,
+    TVIVideoFormat *format = getClosestCameraFormat(camera, desiredDimensions);
+    [self.camera startCaptureWithDevice:camera format:format completion:^(AVCaptureDevice *device,
                                                             TVIVideoFormat *startFormat,
                                                             NSError *error) {
         if (!error) {
@@ -408,7 +407,7 @@ RCT_EXPORT_METHOD(connect:(NSString *)roomName accessToken:(NSString *)accessTok
 
         // This will prevent Twilio Video from messing with the audio session
         // since v4 Twilio Video allows for manual audio session configuration (start/stop)
-        builder.uuid = [NSUUID UUID];
+        // builder.uuid = [NSUUID UUID];
         
         if(options[@"enableH264Codec"]){
             builder.preferredVideoCodecs = @[ [TVIH264Codec new] ];
