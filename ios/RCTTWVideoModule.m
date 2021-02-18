@@ -405,7 +405,7 @@ RCT_EXPORT_METHOD(connect:(NSString *)roomName accessToken:(NSString *)accessTok
 
         // This will prevent Twilio Video from messing with the audio session
         // since v4 Twilio Video allows for manual audio session configuration (start/stop)
-        builder.uuid = [NSUUID UUID];
+        // builder.uuid = [NSUUID UUID];
         
         if(options[@"enableH264Codec"]){
             builder.preferredVideoCodecs = @[ [TVIH264Codec new] ];
