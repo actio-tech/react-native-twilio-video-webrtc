@@ -417,6 +417,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             String roomName, String accessToken, ReadableMap options) {
         boolean enableAudio = options.getBoolean("enableAudio");
         boolean enableVideo = options.getBoolean("enableVideo");
+        boolean enableAutomaticSubscription = options.getBoolean("enableAutomaticSubscription");
 
         this.roomName = roomName;
         this.accessToken = accessToken;
@@ -435,12 +436,12 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
                     return;
                 }
             }
-            connectToRoom(enableAudio);
+            connectToRoom(enableAudio, enableAutomaticSubscription);
         });
     }
 
     @MainThread
-    private void connectToRoom(boolean enableAudio) {
+    private void connectToRoom(boolean enableAudio, boolean enableAutomaticSubscription) {
         /*
          * Create a VideoClient allowing you to connect to a Room
          */
@@ -465,8 +466,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             connectOptionsBuilder.dataTracks(Collections.singletonList(localDataTrack));
         }
 
-        // TODO: provide this via a parameter
-        connectOptionsBuilder.enableAutomaticSubscription(false);
+        connectOptionsBuilder.enableAutomaticSubscription(enableAutomaticSubscription);
 
         room = Video.connect(getContext(), connectOptionsBuilder.build(), roomListener());
     }

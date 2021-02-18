@@ -116,6 +116,7 @@ class TwilioVideo {
       ...options,
       enableAudio: options.enableAudio ?? true,
       enableVideo: options.enableVideo ?? true,
+      enableAutomaticSubscription: options.enableAutomaticSubscription ?? false,
     });
   };
 
