@@ -40,11 +40,9 @@ static NSString* cameraInterruptionEnded      = @"TwilioVideo.onCameraInterrupti
 static NSString* cameraDidStopRunning         = @"TwilioVideo.onCameraDidStopRunning";
 static NSString* statsReceived                = @"TwilioVideo.onStatsReceived";
 
-static const CMVideoDimensions kRCTTWVideoAppCameraSourceDimensions = (CMVideoDimensions){900, 720};
+static const CMVideoDimensions desiredDimensions = (CMVideoDimensions){1280, 720};
 
-static const int32_t kRCTTWVideoCameraSourceFrameRate = 15;
-
-TVIVideoFormat *RCTTWVideoModuleCameraSourceSelectVideoFormatBySize(AVCaptureDevice *device, CMVideoDimensions targetSize) {
+TVIVideoFormat *getClosestCameraFormat(AVCaptureDevice *device, CMVideoDimensions targetSize) {
     TVIVideoFormat *selectedFormat = nil;
     // Ordered from smallest to largest.
     NSOrderedSet<TVIVideoFormat *> *formats = [TVICameraSource supportedFormatsForDevice:device];
@@ -217,7 +215,8 @@ RCT_EXPORT_METHOD(startLocalVideo) {
     }
     self.localVideoTrack = [TVILocalVideoTrack trackWithSource:self.camera enabled:YES name:@"camera"];
     AVCaptureDevice *camera = [TVICameraSource captureDeviceForPosition:AVCaptureDevicePositionFront];
-    [self.camera startCaptureWithDevice:camera completion:^(AVCaptureDevice *device,
+    TVIVideoFormat *format = getClosestCameraFormat(camera, desiredDimensions);
+    [self.camera startCaptureWithDevice:camera format:format completion:^(AVCaptureDevice *device,
                                                             TVIVideoFormat *startFormat,
                                                             NSError *error) {
         if (!error) {
