@@ -10,7 +10,6 @@ import android.content.Context;
 import android.graphics.Point;
 import android.view.ViewGroup;
 
-import com.twilio.video.VideoRenderer;
 import com.twilio.video.VideoScaleType;
 
 import org.webrtc.RendererCommon;
@@ -30,14 +29,14 @@ public class RNVideoViewGroup extends ViewGroup {
         surfaceViewRenderer.setVideoScaleType(VideoScaleType.ASPECT_FILL);
         addView(surfaceViewRenderer);
         surfaceViewRenderer.setListener(
-                new VideoRenderer.Listener() {
+                new tvi.webrtc.RendererCommon.RendererEvents() {
                     @Override
-                    public void onFirstFrame() {
+                    public void onFirstFrameRendered() {
 
                     }
 
                     @Override
-                    public void onFrameDimensionsChanged(int vw, int vh, int rotation) {
+                    public void onFrameResolutionChanged(int vw, int vh, int rotation) {
                         synchronized (layoutSync) {
                             videoHeight = vh;
                             videoWidth = vw;

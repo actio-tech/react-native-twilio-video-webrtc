@@ -42,7 +42,6 @@ import com.twilio.audioswitch.AudioDevice;
 import com.twilio.audioswitch.AudioSwitch;
 import com.twilio.video.AudioTrackPublication;
 import com.twilio.video.BaseTrackStats;
-import com.twilio.video.CameraCapturer;
 import com.twilio.video.ConnectOptions;
 import com.twilio.video.LocalAudioTrack;
 import com.twilio.video.LocalAudioTrackStats;
@@ -68,8 +67,8 @@ import com.twilio.video.StatsReport;
 import com.twilio.video.TrackPublication;
 import com.twilio.video.TwilioException;
 import com.twilio.video.Video;
-import com.twilio.video.VideoConstraints;
 import com.twilio.video.VideoDimensions;
+import com.twilio.video.VideoFormat;
 
 import org.webrtc.voiceengine.WebRtcAudioManager;
 
@@ -179,7 +178,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     private static PatchedVideoView thumbnailVideoView;
     private static LocalVideoTrack localVideoTrack;
 
-    private static CameraCapturer cameraCapturer;
+    private static CameraCapturerCompat cameraCapturer;
     private LocalAudioTrack localAudioTrack;
     private AudioManager audioManager;
     private AudioSwitch audioSwitch;
@@ -236,11 +235,12 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
          */
         audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         List<Class<? extends AudioDevice>> preferredDevicesList = Arrays.asList(
-            AudioDevice.BluetoothHeadset.class,
-            AudioDevice.WiredHeadset.class,
-            AudioDevice.Speakerphone.class
+                AudioDevice.BluetoothHeadset.class,
+                AudioDevice.WiredHeadset.class,
+                AudioDevice.Speakerphone.class
         );
-        audioSwitch = new AudioSwitch(context, false, (int a) -> {}, preferredDevicesList);
+        audioSwitch = new AudioSwitch(context, false, (int a) -> {
+        }, preferredDevicesList);
 
         // Create the local data track
         // localDataTrack = LocalDataTrack.create(this);
@@ -258,38 +258,13 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
 
     // ===== SETUP =================================================================================
 
-    private VideoConstraints buildVideoConstraints() {
-        return new VideoConstraints.Builder()
-                .minVideoDimensions(VideoDimensions.CIF_VIDEO_DIMENSIONS)
-                .maxVideoDimensions(VideoDimensions.HD_720P_VIDEO_DIMENSIONS)
-                .minFps(5)
-                .maxFps(24)
-                .build();
+    private VideoFormat buildVideoFormat() {
+        return new VideoFormat(VideoDimensions.HD_720P_VIDEO_DIMENSIONS, 30);
     }
 
-    private CameraCapturer createCameraCaputer(Context context, CameraCapturer.CameraSource cameraSource) {
-        CameraCapturer newCameraCapturer = null;
+    private CameraCapturerCompat createCameraCaputer(Context context, CameraCapturerCompat.Source cameraSource) {
         try {
-            newCameraCapturer = new CameraCapturer(
-                    context,
-                    cameraSource,
-                    new CameraCapturer.Listener() {
-                        @Override
-                        public void onFirstFrameAvailable() {
-                        }
-
-                        @Override
-                        public void onCameraSwitched() {
-                            setThumbnailMirror();
-                        }
-
-                        @Override
-                        public void onError(int i) {
-                            Log.i("CustomTwilioVideoView", "Error getting camera");
-                        }
-                    }
-            );
-            return newCameraCapturer;
+            return new CameraCapturerCompat(context, cameraSource);
         } catch (Exception e) {
             return null;
         }
@@ -297,9 +272,9 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
 
     private boolean createLocalVideo(boolean enableVideo) {
         // Share your camera
-        cameraCapturer = this.createCameraCaputer(getContext(), CameraCapturer.CameraSource.FRONT_CAMERA);
+        cameraCapturer = this.createCameraCaputer(getContext(), CameraCapturerCompat.Source.FRONT_CAMERA);
         if (cameraCapturer == null) {
-            cameraCapturer = this.createCameraCaputer(getContext(), CameraCapturer.CameraSource.BACK_CAMERA);
+            cameraCapturer = this.createCameraCaputer(getContext(), CameraCapturerCompat.Source.BACK_CAMERA);
         }
         if (cameraCapturer == null) {
             WritableMap event = new WritableNativeMap();
@@ -307,14 +282,11 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             pushEvent(ON_CONNECT_FAILURE, event);
             return false;
         }
-
-        if (cameraCapturer.getSupportedFormats().size() > 0) {
-            localVideoTrack = LocalVideoTrack.create(getContext(), enableVideo, cameraCapturer, buildVideoConstraints());
-            if (thumbnailVideoView != null && localVideoTrack != null) {
-                localVideoTrack.addRenderer(thumbnailVideoView);
-            }
-            setThumbnailMirror();
+        localVideoTrack = LocalVideoTrack.create(getContext(), enableVideo, cameraCapturer, buildVideoFormat());
+        if (thumbnailVideoView != null && localVideoTrack != null) {
+            localVideoTrack.addSink(thumbnailVideoView);
         }
+        setThumbnailMirror();
         return true;
     }
 
@@ -331,12 +303,12 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
              * If the local video track was released when the app was put in the background, recreate.
              */
             if (cameraCapturer != null && localVideoTrack == null) {
-                localVideoTrack = LocalVideoTrack.create(getContext(), true, cameraCapturer, buildVideoConstraints());
+                localVideoTrack = LocalVideoTrack.create(getContext(), true, cameraCapturer, buildVideoFormat());
             }
 
             if (localVideoTrack != null) {
                 if (thumbnailVideoView != null) {
-                    localVideoTrack.addRenderer(thumbnailVideoView);
+                    localVideoTrack.addSink(thumbnailVideoView);
                 }
 
                 /*
@@ -505,7 +477,6 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             }
             setAudioFocus(false);
             if (cameraCapturer != null) {
-                cameraCapturer.stopCapture();
                 cameraCapturer = null;
             }
         });
@@ -523,8 +494,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     @MainThread
     private static void setThumbnailMirror() {
         if (cameraCapturer != null) {
-            CameraCapturer.CameraSource cameraSource = cameraCapturer.getCameraSource();
-            final boolean isBackCamera = (cameraSource == CameraCapturer.CameraSource.BACK_CAMERA);
+            final boolean isBackCamera = cameraCapturer.getCameraSource() == CameraCapturerCompat.Source.BACK_CAMERA;
             if (thumbnailVideoView != null && thumbnailVideoView.getVisibility() == View.VISIBLE) {
                 thumbnailVideoView.setMirror(!isBackCamera);
             }
@@ -536,8 +506,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         mainHandler.post(() -> {
             if (cameraCapturer != null) {
                 cameraCapturer.switchCamera();
-                CameraCapturer.CameraSource cameraSource = cameraCapturer.getCameraSource();
-                final boolean isBackCamera = cameraSource == CameraCapturer.CameraSource.BACK_CAMERA;
+                final boolean isBackCamera = cameraCapturer.getCameraSource() == CameraCapturerCompat.Source.BACK_CAMERA;
                 WritableMap event = new WritableNativeMap();
                 event.putBoolean("isBackCamera", isBackCamera);
                 pushEvent(ON_CAMERA_SWITCHED, event);
@@ -1063,9 +1032,9 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
                         continue;
                     }
                     if (publication.getTrackSid().equals(trackSid)) {
-                        track.addRenderer(v);
+                        track.addSink(v);
                     } else {
-                        track.removeRenderer(v);
+                        track.removeSink(v);
                     }
                 }
             }
@@ -1075,7 +1044,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     public static void registerThumbnailVideoView(PatchedVideoView v) {
         thumbnailVideoView = v;
         if (localVideoTrack != null) {
-            localVideoTrack.addRenderer(v);
+            localVideoTrack.addSink(v);
         }
         setThumbnailMirror();
     }
