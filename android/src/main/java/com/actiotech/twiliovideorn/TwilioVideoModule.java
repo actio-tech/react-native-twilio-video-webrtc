@@ -104,11 +104,13 @@ import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPAN
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPANT_REMOVED_VIDEO_TRACK;
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_STATS_RECEIVED;
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_VIDEO_CHANGED;
+import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_NETWORK_QUALITY_LEVELS_CHANGED;
 
 public class TwilioVideoModule extends ReactContextBaseJavaModule implements LifecycleEventListener, StatsListener {
     private static final String TAG = "TwilioVideoModule";
     private static final String DATA_TRACK_MESSAGE_THREAD_NAME = "DataTrackMessages";
     private boolean enableRemoteAudio = false;
+    private boolean enableNetworkQualityReporting = false;
 
     @Retention(RetentionPolicy.SOURCE)
     @StringDef({Events.ON_CAMERA_SWITCHED,
@@ -133,7 +135,8 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             Events.ON_PARTICIPANT_DISABLED_VIDEO_TRACK,
             Events.ON_PARTICIPANT_ENABLED_AUDIO_TRACK,
             Events.ON_PARTICIPANT_DISABLED_AUDIO_TRACK,
-            Events.ON_STATS_RECEIVED})
+            Events.ON_STATS_RECEIVED,
+            Events.ON_NETWORK_QUALITY_LEVELS_CHANGED})
     public @interface Events {
         String ON_CAMERA_SWITCHED = "TwilioVideo.onCameraSwitched";
         String ON_VIDEO_CHANGED = "TwilioVideo.onVideoChanged";
@@ -158,6 +161,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         String ON_PARTICIPANT_ENABLED_AUDIO_TRACK = "TwilioVideo.onParticipantEnabledAudioTrack";
         String ON_PARTICIPANT_DISABLED_AUDIO_TRACK = "TwilioVideo.onParticipantDisabledAudioTrack";
         String ON_STATS_RECEIVED = "TwilioVideo.onStatsReceived";
+        String ON_NETWORK_QUALITY_LEVELS_CHANGED = "TwilioVideo.onNetworkQualityLevelsChanged";
     }
 
     private final ReactContext context;
@@ -390,10 +394,12 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         boolean enableAudio = options.getBoolean("enableAudio");
         boolean enableVideo = options.getBoolean("enableVideo");
         boolean enableAutomaticSubscription = options.getBoolean("enableAutomaticSubscription");
+        boolean enableNetworkQualityReporting = options.getBoolean("enableNetworkQualityReporting");
 
         this.roomName = roomName;
         this.accessToken = accessToken;
         this.enableRemoteAudio = enableAudio;
+        this.enableNetworkQualityReporting = enableNetworkQualityReporting;
 
         mainHandler.post(() -> {
             createDataTrackThread();
@@ -408,12 +414,12 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
                     return;
                 }
             }
-            connectToRoom(enableAudio, enableAutomaticSubscription);
+            connectToRoom(enableAudio, enableAutomaticSubscription, enableNetworkQualityReporting);
         });
     }
 
     @MainThread
-    private void connectToRoom(boolean enableAudio, boolean enableAutomaticSubscription) {
+    private void connectToRoom(boolean enableAudio, boolean enableAutomaticSubscription, boolean enableNetworkQualityReporting) {
         /*
          * Create a VideoClient allowing you to connect to a Room
          */
@@ -439,6 +445,13 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         }
 
         connectOptionsBuilder.enableAutomaticSubscription(enableAutomaticSubscription);
+
+         if (enableNetworkQualityReporting) {
+             connectOptionsBuilder.enableNetworkQuality(true);
+             connectOptionsBuilder.networkQualityConfiguration(new NetworkQualityConfiguration(
+                     NetworkQualityVerbosity.NETWORK_QUALITY_VERBOSITY_MINIMAL,
+                     NetworkQualityVerbosity.NETWORK_QUALITY_VERBOSITY_MINIMAL));
+         }
 
         room = Video.connect(getContext(), connectOptionsBuilder.build(), roomListener());
     }
@@ -681,6 +694,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             @Override
             public void onConnected(Room room) {
                 localParticipant = room.getLocalParticipant();
+                localParticipant.setListener(localListener());
 
                 WritableMap event = new WritableNativeMap();
                 event.putString("roomName", room.getName());
@@ -774,6 +788,54 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
 
             @Override
             public void onRecordingStopped(Room room) {
+            }
+        };
+    }
+
+    // ====== LOCAL LISTENER =======================================================================
+    private LocalParticipant.Listener localListener() {
+        return new LocalParticipant.Listener() {
+
+            @Override
+            public void onAudioTrackPublished(LocalParticipant localParticipant, LocalAudioTrackPublication localAudioTrackPublication) {
+
+            }
+
+            @Override
+            public void onAudioTrackPublicationFailed(LocalParticipant localParticipant, LocalAudioTrack localAudioTrack, TwilioException twilioException) {
+
+            }
+
+            @Override
+            public void onVideoTrackPublished(LocalParticipant localParticipant, LocalVideoTrackPublication localVideoTrackPublication) {
+
+            }
+
+            @Override
+            public void onVideoTrackPublicationFailed(LocalParticipant localParticipant, LocalVideoTrack localVideoTrack, TwilioException twilioException) {
+
+            }
+
+            @Override
+            public void onDataTrackPublished(LocalParticipant localParticipant, LocalDataTrackPublication localDataTrackPublication) {
+
+            }
+
+            @Override
+            public void onDataTrackPublicationFailed(LocalParticipant localParticipant, LocalDataTrack localDataTrack, TwilioException twilioException) {
+
+            }
+
+            @Override
+            public void onNetworkQualityLevelChanged(LocalParticipant localParticipant, NetworkQualityLevel networkQualityLevel) {
+                WritableMap event = new WritableNativeMap();
+                event.putMap("participant", buildParticipant(localParticipant));
+                event.putBoolean("isLocalUser", true);
+
+                // Twilio SDK defines Enum 0 as UNKNOWN and 1 as Quality ZERO, so we subtract one to get the correct quality level as an integer
+                event.putInt("quality", networkQualityLevel.ordinal() - 1);
+
+                pushEvent(ON_NETWORK_QUALITY_LEVELS_CHANGED, event);
             }
         };
     }
@@ -942,6 +1004,18 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             public void onVideoTrackDisabled(RemoteParticipant participant, RemoteVideoTrackPublication publication) {
                 WritableMap event = buildParticipantVideoEvent(participant, publication);
                 pushEvent(ON_PARTICIPANT_DISABLED_VIDEO_TRACK, event);
+            }
+
+            @Override
+            public void onNetworkQualityLevelChanged(RemoteParticipant remoteParticipant, NetworkQualityLevel networkQualityLevel) {
+                WritableMap event = new WritableNativeMap();
+                event.putMap("participant", buildParticipant(remoteParticipant));
+                event.putBoolean("isLocalUser", false);
+
+                // Twilio SDK defines Enum 0 as UNKNOWN and 1 as Quality ZERO, so we subtract one to get the correct quality level as an integer
+                event.putInt("quality", networkQualityLevel.ordinal() - 1);
+
+                pushEvent(ON_NETWORK_QUALITY_LEVELS_CHANGED, event);
             }
         };
     }
