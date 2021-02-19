@@ -117,6 +117,7 @@ class TwilioVideo {
       enableAudio: options.enableAudio ?? true,
       enableVideo: options.enableVideo ?? true,
       enableAutomaticSubscription: options.enableAutomaticSubscription ?? false,
+      enableNetworkQualityReporting: options.enableNetworkQualityReporting ?? false,
     });
   };
 
@@ -295,6 +296,13 @@ class TwilioVideo {
       callback,
     );
   };
+
+  onNetworkQualityLevelsChanged = callback => {
+    return this.eventEmitter.addListener(
+      'TwilioVideo.onNetworkQualityLevelsChanged',
+      callback,
+    );
+  }
 
   // Stats
 

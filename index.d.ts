@@ -134,6 +134,14 @@ declare module 'react-native-twilio-video-webrtc' {
 
   export type ParticipantEventCb = (p: ParticipantEventArgs) => void;
 
+  export interface NetworkLevelChangeEvent {
+    participant: Participant;
+    isLocalUser: boolean;
+    qualityLevel: string;
+  };
+
+  export type NetworkLevelChangeEventCb = (e: NetworkLevelChangeEvent) => void;
+
   interface AudioTrackStats {
     audioLevel: number;
     jitter: number;
@@ -182,6 +190,7 @@ declare module 'react-native-twilio-video-webrtc' {
     enableRemoteAudio?: boolean;
     enableH264Codec?: boolean;
     enableAutomaticSubscription?: boolean;
+    enableNetworkQualityReporting?: boolean;
     // if audioBitrate OR videoBitrate is provided, you must provide both
     audioBitrate?: number;
     videoBitrate?: number;
@@ -243,6 +252,8 @@ declare module 'react-native-twilio-video-webrtc' {
     onDataTrackMessageReceived: TwilioSubscription<MessageReceivedEventCb>;
 
     onStatsReceived: TwilioSubscription<StatsReceivedEventCb>;
+
+    onNetworkQualityLevelsChanged: TwilioSubscription<>;
   }
 
   const TwilioVideo: ITwilioVideo;

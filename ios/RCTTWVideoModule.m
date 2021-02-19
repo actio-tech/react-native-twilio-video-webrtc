@@ -39,6 +39,7 @@ static NSString* cameraWasInterrupted         = @"TwilioVideo.onCameraWasInterru
 static NSString* cameraInterruptionEnded      = @"TwilioVideo.onCameraInterruptionEnded";
 static NSString* cameraDidStopRunning         = @"TwilioVideo.onCameraDidStopRunning";
 static NSString* statsReceived                = @"TwilioVideo.onStatsReceived";
+static NSString* networkQualityLevelsChanged  = @"TwilioVideo.onNetworkQualityLevelsChanged";
 
 static const CMVideoDimensions desiredDimensions = (CMVideoDimensions){1280, 720};
 
@@ -63,7 +64,7 @@ TVIVideoFormat *getClosestCameraFormat(AVCaptureDevice *device, CMVideoDimension
 }
 
 
-@interface RCTTWVideoModule () <TVIRemoteDataTrackDelegate, TVIRemoteParticipantDelegate, TVIRoomDelegate, TVICameraSourceDelegate>
+@interface RCTTWVideoModule () <TVIRemoteDataTrackDelegate, TVIRemoteParticipantDelegate, TVIRoomDelegate, TVICameraSourceDelegate, TVILocalParticipantDelegate>
 
 @property (strong, nonatomic) TVICameraSource *camera;
 @property (strong, nonatomic) TVILocalVideoTrack* localVideoTrack;
@@ -157,7 +158,8 @@ RCT_EXPORT_MODULE();
         cameraDidStart,
         cameraWasInterrupted,
         cameraInterruptionEnded,
-        statsReceived
+        statsReceived,
+        networkQualityLevelsChanged
     ];
 }
 
@@ -416,7 +418,11 @@ RCT_EXPORT_METHOD(connect:(NSString *)roomName accessToken:(NSString *)accessTok
             NSInteger videoBitrate = [options[@"videoBitrate"] integerValue];
             builder.encodingParameters = [[TVIEncodingParameters alloc] initWithAudioBitrate:(audioBitrate) ? audioBitrate : 40 videoBitrate:(videoBitrate) ? videoBitrate : 1500];
         }
-        
+
+        if (options[@"enableNetworkQualityReporting"] && [options[@"enableNetworkQualityReporting"] boolValue]) {
+            builder.networkQualityEnabled = true;
+            builder.networkQualityConfiguration = [ [TVINetworkQualityConfiguration alloc] initWithLocalVerbosity:TVINetworkQualityVerbosityMinimal remoteVerbosity:TVINetworkQualityVerbosityMinimal];
+        }
     }];
     
     self.room = [TwilioVideoSDK connectWithOptions:connectOptions delegate:self];
@@ -504,7 +510,8 @@ RCT_EXPORT_METHOD(disconnect) {
     TVILocalParticipant *localParticipant = room.localParticipant;
     [participants addObject:[localParticipant toJSON]];
     [self sendEventCheckingListenerWithName:roomDidConnect body:@{ @"roomName" : room.name , @"roomSid": room.sid, @"participants" : participants }];
-    
+
+    localParticipant.delegate = self;
 }
 
 - (void)room:(TVIRoom *)room didDisconnectWithError:(nullable NSError *)error {
@@ -616,6 +623,10 @@ RCT_EXPORT_METHOD(disconnect) {
     [self sendEventCheckingListenerWithName:participantDisabledAudioTrack body:@{ @"participant": [participant toJSON], @"track": [publication toJSON] }];
 }
 
+- (void)remoteParticipant:(nonnull TVIRemoteParticipant *)participant networkQualityLevelDidChange:(TVINetworkQualityLevel)networkQualityLevel {
+    [self sendEventCheckingListenerWithName:networkQualityLevelsChanged body:@{ @"participant": [participant toJSON], @"isLocalUser": [NSNumber numberWithBool:false], @"quality": [NSNumber numberWithInt:(int)networkQualityLevel]}];
+}
+
 # pragma mark - TVIRemoteDataTrackDelegate
 
 - (void)remoteDataTrack:(nonnull TVIRemoteDataTrack *)remoteDataTrack didReceiveString:(nonnull NSString *)message {
@@ -628,8 +639,10 @@ RCT_EXPORT_METHOD(disconnect) {
     NSLog(@"DataTrack didReceiveData");
 }
 
+# pragma mark - TVILocalParticipantDelegate
 
-
-// TODO: Local participant delegates
+- (void)localParticipant:(nonnull TVILocalParticipant *)participant networkQualityLevelDidChange:(TVINetworkQualityLevel)networkQualityLevel {
+    [self sendEventCheckingListenerWithName:networkQualityLevelsChanged body:@{ @"participant": [participant toJSON], @"isLocalUser": [NSNumber numberWithBool:true], @"quality": [NSNumber numberWithInt:(int)networkQualityLevel]}];
+}
 
 @end
