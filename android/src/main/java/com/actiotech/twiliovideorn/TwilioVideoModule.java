@@ -45,11 +45,17 @@ import com.twilio.video.BaseTrackStats;
 import com.twilio.video.ConnectOptions;
 import com.twilio.video.EncodingParameters;
 import com.twilio.video.LocalAudioTrack;
+import com.twilio.video.LocalAudioTrackPublication;
 import com.twilio.video.LocalAudioTrackStats;
+import com.twilio.video.LocalDataTrackPublication;
 import com.twilio.video.LocalParticipant;
 import com.twilio.video.LocalTrackStats;
 import com.twilio.video.LocalVideoTrack;
+import com.twilio.video.LocalVideoTrackPublication;
 import com.twilio.video.LocalVideoTrackStats;
+import com.twilio.video.NetworkQualityConfiguration;
+import com.twilio.video.NetworkQualityLevel;
+import com.twilio.video.NetworkQualityVerbosity;
 import com.twilio.video.Participant;
 import com.twilio.video.RemoteAudioTrack;
 import com.twilio.video.RemoteAudioTrackPublication;
@@ -111,6 +117,8 @@ import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_NETWORK_QU
 public class TwilioVideoModule extends ReactContextBaseJavaModule implements LifecycleEventListener, StatsListener {
     private static final String TAG = "TwilioVideoModule";
     private static final String DATA_TRACK_MESSAGE_THREAD_NAME = "DataTrackMessages";
+    private static final int DefaultAudioBitrate = 32;
+    private static final int DefaultVideoBitrate = 2400;
     private boolean enableRemoteAudio = false;
     private boolean enableNetworkQualityReporting = false;
 
@@ -447,7 +455,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         }
 
         connectOptionsBuilder.preferVideoCodecs(Collections.singletonList(new Vp8Codec(true)));
-        connectOptionsBuilder.encodingParameters(new EncodingParameters(32, 2400));
+        connectOptionsBuilder.encodingParameters(new EncodingParameters(DefaultAudioBitrate, DefaultVideoBitrate));
         connectOptionsBuilder.enableAutomaticSubscription(enableAutomaticSubscription);
 
          if (enableNetworkQualityReporting) {
