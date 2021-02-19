@@ -43,12 +43,19 @@ import com.twilio.audioswitch.AudioSwitch;
 import com.twilio.video.AudioTrackPublication;
 import com.twilio.video.BaseTrackStats;
 import com.twilio.video.ConnectOptions;
+import com.twilio.video.EncodingParameters;
 import com.twilio.video.LocalAudioTrack;
+import com.twilio.video.LocalAudioTrackPublication;
 import com.twilio.video.LocalAudioTrackStats;
+import com.twilio.video.LocalDataTrackPublication;
 import com.twilio.video.LocalParticipant;
 import com.twilio.video.LocalTrackStats;
 import com.twilio.video.LocalVideoTrack;
+import com.twilio.video.LocalVideoTrackPublication;
 import com.twilio.video.LocalVideoTrackStats;
+import com.twilio.video.NetworkQualityConfiguration;
+import com.twilio.video.NetworkQualityLevel;
+import com.twilio.video.NetworkQualityVerbosity;
 import com.twilio.video.Participant;
 import com.twilio.video.RemoteAudioTrack;
 import com.twilio.video.RemoteAudioTrackPublication;
@@ -69,6 +76,7 @@ import com.twilio.video.TwilioException;
 import com.twilio.video.Video;
 import com.twilio.video.VideoDimensions;
 import com.twilio.video.VideoFormat;
+import com.twilio.video.Vp8Codec;
 
 import org.webrtc.voiceengine.WebRtcAudioManager;
 
@@ -109,6 +117,8 @@ import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_NETWORK_QU
 public class TwilioVideoModule extends ReactContextBaseJavaModule implements LifecycleEventListener, StatsListener {
     private static final String TAG = "TwilioVideoModule";
     private static final String DATA_TRACK_MESSAGE_THREAD_NAME = "DataTrackMessages";
+    private static final int DefaultAudioBitrate = 32;
+    private static final int DefaultVideoBitrate = 2400;
     private boolean enableRemoteAudio = false;
     private boolean enableNetworkQualityReporting = false;
 
@@ -263,7 +273,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     // ===== SETUP =================================================================================
 
     private VideoFormat buildVideoFormat() {
-        return new VideoFormat(VideoDimensions.HD_720P_VIDEO_DIMENSIONS, 30);
+        return new VideoFormat(VideoDimensions.HD_720P_VIDEO_DIMENSIONS, 24);
     }
 
     private CameraCapturerCompat createCameraCaputer(Context context, CameraCapturerCompat.Source cameraSource) {
@@ -444,6 +454,8 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             connectOptionsBuilder.dataTracks(Collections.singletonList(localDataTrack));
         }
 
+        connectOptionsBuilder.preferVideoCodecs(Collections.singletonList(new Vp8Codec(true)));
+        connectOptionsBuilder.encodingParameters(new EncodingParameters(DefaultAudioBitrate, DefaultVideoBitrate));
         connectOptionsBuilder.enableAutomaticSubscription(enableAutomaticSubscription);
 
          if (enableNetworkQualityReporting) {
