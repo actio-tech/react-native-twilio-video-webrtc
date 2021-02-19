@@ -42,6 +42,9 @@ static NSString* statsReceived                = @"TwilioVideo.onStatsReceived";
 static NSString* networkQualityLevelsChanged  = @"TwilioVideo.onNetworkQualityLevelsChanged";
 
 static const CMVideoDimensions desiredDimensions = (CMVideoDimensions){1280, 720};
+static const int SimulcastAudioBitrate = 32;
+static const int SimulcastVideoBitrate = 2400;
+static const int SimulcastVideoFrameRate = 24;
 
 TVIVideoFormat *getClosestCameraFormat(AVCaptureDevice *device, CMVideoDimensions targetSize) {
     TVIVideoFormat *selectedFormat = nil;
@@ -208,19 +211,17 @@ RCT_EXPORT_METHOD(setRemoteAudioEnabled:(NSString *)participantSid enabled:(BOOL
 }
 
 RCT_EXPORT_METHOD(startLocalVideo) {
-    TVICameraSourceOptions *options = [TVICameraSourceOptions optionsWithBlock:^(TVICameraSourceOptionsBuilder * _Nonnull builder) {
-        
-    }];
+    TVICameraSourceOptions *options = [TVICameraSourceOptions optionsWithBlock:^(TVICameraSourceOptionsBuilder * _Nonnull builder) {}];
     self.camera = [[TVICameraSource alloc] initWithOptions:options delegate:self];
     if (self.camera == nil) {
         return;
     }
+    
     self.localVideoTrack = [TVILocalVideoTrack trackWithSource:self.camera enabled:YES name:@"camera"];
     AVCaptureDevice *camera = [TVICameraSource captureDeviceForPosition:AVCaptureDevicePositionFront];
     TVIVideoFormat *format = getClosestCameraFormat(camera, desiredDimensions);
-    [self.camera startCaptureWithDevice:camera format:format completion:^(AVCaptureDevice *device,
-                                                            TVIVideoFormat *startFormat,
-                                                            NSError *error) {
+    format.frameRate = SimulcastVideoFrameRate;
+    [self.camera startCaptureWithDevice:camera format:format completion:^(AVCaptureDevice *device, TVIVideoFormat *startFormat, NSError *error) {
         if (!error) {
             for (TVIVideoView *renderer in self.localVideoTrack.renderers) {
                 [self updateLocalViewMirroring:renderer];
@@ -358,16 +359,17 @@ RCT_EXPORT_METHOD(toggleSoundSetup:(BOOL)speaker) {
 RCT_EXPORT_METHOD(getStats) {
     if (self.room) {
         [self.room getStatsWithBlock: self.statsReceivedCallback];
-                }
-            }
+    }
+}
 
 RCT_EXPORT_METHOD(requestStats:(double)intervalMs) {
     [self.getStatsTimer invalidate];
-    self.getStatsTimer = [NSTimer scheduledTimerWithTimeInterval: intervalMs / 1000
-                                                          target: self
-                                                          selector: @selector(getStats)
-                                                          userInfo: nil repeats:YES];
-    }
+    self.getStatsTimer = [NSTimer scheduledTimerWithTimeInterval:intervalMs / 1000
+                                                          target:self
+                                                        selector:@selector(getStats)
+                                                        userInfo:nil
+                                                         repeats:YES];
+}
 
 RCT_EXPORT_METHOD(cancelStatsRequest) {
     [self.getStatsTimer invalidate];
@@ -404,19 +406,21 @@ RCT_EXPORT_METHOD(connect:(NSString *)roomName accessToken:(NSString *)accessTok
         builder.roomName = roomName;
         
         builder.automaticSubscriptionEnabled = [options[@"enableAutomaticSubscription"] boolValue];
-
+        
         // This will prevent Twilio Video from messing with the audio session
         // since v4 Twilio Video allows for manual audio session configuration (start/stop)
         // builder.uuid = [NSUUID UUID];
         
-        if(options[@"enableH264Codec"]){
-            builder.preferredVideoCodecs = @[ [TVIH264Codec new] ];
-        }
+        builder.preferredVideoCodecs = @[ [[TVIVp8Codec alloc] initWithSimulcast:YES] ];
         
         if(options[@"audioBitrate"] || options[@"videoBitrate"]){
             NSInteger audioBitrate = [options[@"audioBitrate"] integerValue];
             NSInteger videoBitrate = [options[@"videoBitrate"] integerValue];
-            builder.encodingParameters = [[TVIEncodingParameters alloc] initWithAudioBitrate:(audioBitrate) ? audioBitrate : 40 videoBitrate:(videoBitrate) ? videoBitrate : 1500];
+            builder.encodingParameters = [[TVIEncodingParameters alloc] initWithAudioBitrate:(audioBitrate) ? audioBitrate : SimulcastAudioBitrate
+                                                                                videoBitrate:(videoBitrate) ? videoBitrate : SimulcastVideoBitrate];
+        } else {
+            builder.encodingParameters = [[TVIEncodingParameters alloc] initWithAudioBitrate:SimulcastAudioBitrate
+                                                                                videoBitrate:SimulcastVideoBitrate];
         }
 
         if (options[@"enableNetworkQualityReporting"] && [options[@"enableNetworkQualityReporting"] boolValue]) {
@@ -441,7 +445,7 @@ RCT_EXPORT_METHOD(disconnect) {
     [self stopLocalVideo];
     
     [self.remoteDataTrackMap removeAllObjects];
-
+    
     [self.room disconnect];
 }
 
@@ -567,7 +571,7 @@ RCT_EXPORT_METHOD(disconnect) {
     if (error) {
         [body addEntriesFromDictionary:@{ @"error" : @{ @"message": error.localizedDescription, @"code": @(error.code) } }];
     }
-
+    
     [self sendEventCheckingListenerWithName:participantFailedToSubscribeToDataTrack body:body];
 }
 
@@ -585,7 +589,7 @@ RCT_EXPORT_METHOD(disconnect) {
     if (error) {
         [body addEntriesFromDictionary:@{ @"error" : @{ @"message": error.localizedDescription, @"code": @(error.code) } }];
     }
-
+    
     [self sendEventCheckingListenerWithName:participantFailedToSubscribeToVideoTrack body:body];
 }
 
@@ -603,7 +607,7 @@ RCT_EXPORT_METHOD(disconnect) {
     if (error) {
         [body addEntriesFromDictionary:@{ @"error" : @{ @"message": error.localizedDescription, @"code": @(error.code) } }];
     }
-
+    
     [self sendEventCheckingListenerWithName:participantFailedToSubscribeToAudioTrack body:body];
 }
 

@@ -43,6 +43,7 @@ import com.twilio.audioswitch.AudioSwitch;
 import com.twilio.video.AudioTrackPublication;
 import com.twilio.video.BaseTrackStats;
 import com.twilio.video.ConnectOptions;
+import com.twilio.video.EncodingParameters;
 import com.twilio.video.LocalAudioTrack;
 import com.twilio.video.LocalAudioTrackStats;
 import com.twilio.video.LocalParticipant;
@@ -69,6 +70,7 @@ import com.twilio.video.TwilioException;
 import com.twilio.video.Video;
 import com.twilio.video.VideoDimensions;
 import com.twilio.video.VideoFormat;
+import com.twilio.video.Vp8Codec;
 
 import org.webrtc.voiceengine.WebRtcAudioManager;
 
@@ -263,7 +265,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     // ===== SETUP =================================================================================
 
     private VideoFormat buildVideoFormat() {
-        return new VideoFormat(VideoDimensions.HD_720P_VIDEO_DIMENSIONS, 30);
+        return new VideoFormat(VideoDimensions.HD_720P_VIDEO_DIMENSIONS, 24);
     }
 
     private CameraCapturerCompat createCameraCaputer(Context context, CameraCapturerCompat.Source cameraSource) {
@@ -444,6 +446,8 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             connectOptionsBuilder.dataTracks(Collections.singletonList(localDataTrack));
         }
 
+        connectOptionsBuilder.preferVideoCodecs(Collections.singletonList(new Vp8Codec(true)));
+        connectOptionsBuilder.encodingParameters(new EncodingParameters(32, 2400));
         connectOptionsBuilder.enableAutomaticSubscription(enableAutomaticSubscription);
 
          if (enableNetworkQualityReporting) {
