@@ -118,7 +118,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     private static final String TAG = "TwilioVideoModule";
     private static final String DATA_TRACK_MESSAGE_THREAD_NAME = "DataTrackMessages";
     private static final int DefaultAudioBitrate = 32;
-    private static final int DefaultVideoBitrate = 2400;
+    private static final int DefaultVideoBitrate = 5500;
     private boolean enableRemoteAudio = false;
     private boolean enableNetworkQualityReporting = false;
 

@@ -43,7 +43,7 @@ static NSString* networkQualityLevelsChanged  = @"TwilioVideo.onNetworkQualityLe
 
 static const CMVideoDimensions desiredDimensions = (CMVideoDimensions){1280, 720};
 static const int SimulcastAudioBitrate = 32;
-static const int SimulcastVideoBitrate = 2400;
+static const int SimulcastVideoBitrate = 5500;
 static const int SimulcastVideoFrameRate = 24;
 
 TVIVideoFormat *getClosestCameraFormat(AVCaptureDevice *device, CMVideoDimensions targetSize) {
