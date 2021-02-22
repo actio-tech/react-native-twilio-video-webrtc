@@ -137,7 +137,7 @@ declare module 'react-native-twilio-video-webrtc' {
   export interface NetworkLevelChangeEvent {
     participant: Participant;
     isLocalUser: boolean;
-    qualityLevel: string;
+    quality: number;
   };
 
   export type NetworkLevelChangeEventCb = (e: NetworkLevelChangeEvent) => void;
@@ -253,7 +253,7 @@ declare module 'react-native-twilio-video-webrtc' {
 
     onStatsReceived: TwilioSubscription<StatsReceivedEventCb>;
 
-    onNetworkQualityLevelsChanged: TwilioSubscription<>;
+    onNetworkQualityLevelsChanged: TwilioSubscription<NetworkLevelChangeEventCb>;
   }
 
   const TwilioVideo: ITwilioVideo;
