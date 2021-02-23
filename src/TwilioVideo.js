@@ -118,6 +118,8 @@ class TwilioVideo {
       enableVideo: options.enableVideo ?? true,
       enableAutomaticSubscription: options.enableAutomaticSubscription ?? false,
       enableNetworkQualityReporting: options.enableNetworkQualityReporting ?? false,
+      ...(options.audioBitrate ? { audioBitrate: options.audioBitrate } : {}),
+      ...(options.videoBitrate ? { videoBitrate: options.videoBitrate } : {}),
     });
   };
 

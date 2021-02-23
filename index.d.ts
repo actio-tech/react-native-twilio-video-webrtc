@@ -187,8 +187,6 @@ declare module 'react-native-twilio-video-webrtc' {
   export interface ConnectionOptions {
     enableAudio?: boolean;
     enableVideo?: boolean;
-    enableRemoteAudio?: boolean;
-    enableH264Codec?: boolean;
     enableAutomaticSubscription?: boolean;
     enableNetworkQualityReporting?: boolean;
     // if audioBitrate OR videoBitrate is provided, you must provide both
