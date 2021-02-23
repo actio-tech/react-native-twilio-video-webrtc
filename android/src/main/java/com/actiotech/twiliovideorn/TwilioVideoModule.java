@@ -403,7 +403,6 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             String roomName, String accessToken, ReadableMap options) {
         boolean enableAudio = options.getBoolean("enableAudio");
         boolean enableVideo = options.getBoolean("enableVideo");
-        boolean enableAutomaticSubscription = options.getBoolean("enableAutomaticSubscription");
         boolean enableNetworkQualityReporting = options.getBoolean("enableNetworkQualityReporting");
 
         this.roomName = roomName;
@@ -424,12 +423,21 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
                     return;
                 }
             }
-            connectToRoom(enableAudio, enableAutomaticSubscription, enableNetworkQualityReporting);
+            connectToRoom(options);
         });
     }
 
     @MainThread
-    private void connectToRoom(boolean enableAudio, boolean enableAutomaticSubscription, boolean enableNetworkQualityReporting) {
+    private void connectToRoom(ReadableMap options) {
+        boolean enableAudio = options.getBoolean("enableAudio");
+        boolean enableAutomaticSubscription = options.getBoolean("enableAutomaticSubscription");
+        int audioBitrate = options.hasKey("audioBitrate")
+                ? options.getInt("audioBitrate")
+                : DefaultAudioBitrate;
+        int videoBitrate = options.hasKey("videoBitrate")
+                ? options.getInt("videoBitrate")
+                : DefaultVideoBitrate;
+
         /*
          * Create a VideoClient allowing you to connect to a Room
          */
@@ -455,7 +463,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         }
 
         connectOptionsBuilder.preferVideoCodecs(Collections.singletonList(new Vp8Codec(true)));
-        connectOptionsBuilder.encodingParameters(new EncodingParameters(DefaultAudioBitrate, DefaultVideoBitrate));
+        connectOptionsBuilder.encodingParameters(new EncodingParameters(audioBitrate, videoBitrate));
         connectOptionsBuilder.enableAutomaticSubscription(enableAutomaticSubscription);
 
          if (enableNetworkQualityReporting) {
