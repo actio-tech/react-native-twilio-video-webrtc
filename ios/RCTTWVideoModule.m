@@ -211,7 +211,9 @@ RCT_EXPORT_METHOD(setRemoteAudioEnabled:(NSString *)participantSid enabled:(BOOL
 }
 
 RCT_EXPORT_METHOD(startLocalVideo) {
-    TVICameraSourceOptions *options = [TVICameraSourceOptions optionsWithBlock:^(TVICameraSourceOptionsBuilder * _Nonnull builder) {}];
+    TVICameraSourceOptions *options = [TVICameraSourceOptions optionsWithBlock:^(TVICameraSourceOptionsBuilder * _Nonnull builder) {
+        builder.rotationTags = TVICameraSourceOptionsRotationTagsRemove;
+    }];
     self.camera = [[TVICameraSource alloc] initWithOptions:options delegate:self];
     if (self.camera == nil) {
         return;
