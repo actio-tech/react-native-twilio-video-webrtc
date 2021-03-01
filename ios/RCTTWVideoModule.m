@@ -42,8 +42,8 @@ static NSString* statsReceived                = @"TwilioVideo.onStatsReceived";
 static NSString* networkQualityLevelsChanged  = @"TwilioVideo.onNetworkQualityLevelsChanged";
 
 static const CMVideoDimensions desiredDimensions = (CMVideoDimensions){1280, 720};
-static const int SimulcastAudioBitrate = 32;
-static const int SimulcastVideoBitrate = 5500;
+static const int DefaultAudioBitrate = 32;
+static const int DefaultVideoBitrate = 5500;
 static const int SimulcastVideoFrameRate = 24;
 
 TVIVideoFormat *getClosestCameraFormat(AVCaptureDevice *device, CMVideoDimensions targetSize) {
@@ -388,6 +388,15 @@ RCT_EXPORT_METHOD(connect:(NSString *)roomName accessToken:(NSString *)accessTok
         [self startLocalAudio];
     }
     
+    NSInteger audioBitrate = [options[@"audioBitrate"] integerValue] ?: DefaultAudioBitrate;
+    NSInteger videoBitrate = [options[@"videoBitrate"] integerValue] ?: DefaultVideoBitrate;
+    
+    TVIVideoBandwidthProfileOptions *videoOptions = [TVIVideoBandwidthProfileOptions optionsWithBlock:^(TVIVideoBandwidthProfileOptionsBuilder * _Nonnull builder) {
+        builder.dominantSpeakerPriority = TVITrackPriorityHigh;
+        builder.maxSubscriptionBitrate = @(audioBitrate + videoBitrate);
+        builder.mode = TVIBandwidthProfileModePresentation;
+    }];
+    
     TVIConnectOptions *connectOptions = [TVIConnectOptions optionsWithToken:accessToken block:^(TVIConnectOptionsBuilder * _Nonnull builder) {
         if (self.localVideoTrack) {
             builder.videoTracks = @[self.localVideoTrack];
@@ -404,7 +413,7 @@ RCT_EXPORT_METHOD(connect:(NSString *)roomName accessToken:(NSString *)accessTok
         }
         
         builder.roomName = roomName;
-        
+        builder.bandwidthProfileOptions = [[TVIBandwidthProfileOptions alloc] initWithVideoOptions:videoOptions];
         builder.automaticSubscriptionEnabled = [options[@"enableAutomaticSubscription"] boolValue];
         
         // This will prevent Twilio Video from messing with the audio session
@@ -412,16 +421,8 @@ RCT_EXPORT_METHOD(connect:(NSString *)roomName accessToken:(NSString *)accessTok
         // builder.uuid = [NSUUID UUID];
         
         builder.preferredVideoCodecs = @[ [[TVIVp8Codec alloc] initWithSimulcast:YES] ];
-        
-        if(options[@"audioBitrate"] || options[@"videoBitrate"]){
-            NSInteger audioBitrate = [options[@"audioBitrate"] integerValue];
-            NSInteger videoBitrate = [options[@"videoBitrate"] integerValue];
-            builder.encodingParameters = [[TVIEncodingParameters alloc] initWithAudioBitrate:(audioBitrate) ? audioBitrate : SimulcastAudioBitrate
-                                                                                videoBitrate:(videoBitrate) ? videoBitrate : SimulcastVideoBitrate];
-        } else {
-            builder.encodingParameters = [[TVIEncodingParameters alloc] initWithAudioBitrate:SimulcastAudioBitrate
-                                                                                videoBitrate:SimulcastVideoBitrate];
-        }
+        builder.encodingParameters = [[TVIEncodingParameters alloc] initWithAudioBitrate:audioBitrate
+                                                                            videoBitrate:videoBitrate];
 
         if (options[@"enableNetworkQualityReporting"] && [options[@"enableNetworkQualityReporting"] boolValue]) {
             builder.networkQualityEnabled = true;
