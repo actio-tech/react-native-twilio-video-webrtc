@@ -41,6 +41,8 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.twilio.audioswitch.AudioDevice;
 import com.twilio.audioswitch.AudioSwitch;
 import com.twilio.video.AudioTrackPublication;
+import com.twilio.video.BandwidthProfileMode;
+import com.twilio.video.BandwidthProfileOptions;
 import com.twilio.video.BaseTrackStats;
 import com.twilio.video.ConnectOptions;
 import com.twilio.video.EncodingParameters;
@@ -71,9 +73,11 @@ import com.twilio.video.RemoteVideoTrackStats;
 import com.twilio.video.Room;
 import com.twilio.video.StatsListener;
 import com.twilio.video.StatsReport;
+import com.twilio.video.TrackPriority;
 import com.twilio.video.TrackPublication;
 import com.twilio.video.TwilioException;
 import com.twilio.video.Video;
+import com.twilio.video.VideoBandwidthProfileOptions;
 import com.twilio.video.VideoDimensions;
 import com.twilio.video.VideoFormat;
 import com.twilio.video.Vp8Codec;
@@ -461,6 +465,13 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         if (localDataTrack != null) {
             connectOptionsBuilder.dataTracks(Collections.singletonList(localDataTrack));
         }
+
+        connectOptionsBuilder.bandwidthProfile(new BandwidthProfileOptions((new VideoBandwidthProfileOptions.Builder()
+                .dominantSpeakerPriority(TrackPriority.HIGH)
+                .maxSubscriptionBitrate((long) (audioBitrate + videoBitrate))
+                .mode(BandwidthProfileMode.PRESENTATION)
+                .build()
+        )));
 
         connectOptionsBuilder.preferVideoCodecs(Collections.singletonList(new Vp8Codec(true)));
         connectOptionsBuilder.encodingParameters(new EncodingParameters(audioBitrate, videoBitrate));
