@@ -87,6 +87,10 @@ TVIVideoFormat *getClosestCameraFormat(AVCaptureDevice *device, CMVideoDimension
 
 RCT_EXPORT_MODULE();
 
++ (BOOL)requiresMainQueueSetup {
+    return false;
+}
+
 - (id)init {
     self = [super init];
     if (self) {
