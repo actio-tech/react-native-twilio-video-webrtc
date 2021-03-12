@@ -40,6 +40,8 @@ static NSString* cameraInterruptionEnded      = @"TwilioVideo.onCameraInterrupti
 static NSString* cameraDidStopRunning         = @"TwilioVideo.onCameraDidStopRunning";
 static NSString* statsReceived                = @"TwilioVideo.onStatsReceived";
 static NSString* networkQualityLevelsChanged  = @"TwilioVideo.onNetworkQualityLevelsChanged";
+static NSString* dominantSpeakerChanged  = @"TwilioVideo.onDominantSpeakerChanged";
+
 
 static const CMVideoDimensions desiredDimensions = (CMVideoDimensions){1280, 720};
 static const int DefaultAudioBitrate = 32;
@@ -404,6 +406,11 @@ RCT_EXPORT_METHOD(connect:(NSString *)roomName accessToken:(NSString *)accessTok
     }];
     
     TVIConnectOptions *connectOptions = [TVIConnectOptions optionsWithToken:accessToken block:^(TVIConnectOptionsBuilder * _Nonnull builder) {
+        BOOL enableDominantSpeaker = options[@"enableDominantSpeaker"] && [options[@"enableDominantSpeaker"] boolValue];
+        if (enableDominantSpeaker) {
+            builder.dominantSpeakerEnabled = true;
+        }
+        
         if (self.localVideoTrack) {
             builder.videoTracks = @[self.localVideoTrack];
         }
@@ -557,6 +564,10 @@ RCT_EXPORT_METHOD(disconnect) {
 
 - (void)room:(TVIRoom *)room participantDidDisconnect:(TVIRemoteParticipant *)participant {
     [self sendEventCheckingListenerWithName:roomParticipantDidDisconnect body:@{ @"roomName": room.name, @"roomSid": room.sid, @"participant": [participant toJSON] }];
+}
+
+- (void)room:(TVIRoom *)room dominantSpeakerDidChange:(TVIRemoteParticipant *)participant {
+    [self sendEventCheckingListenerWithName:dominantSpeakerChanged body:@{ @"roomName": room.name, @"roomSid": room.sid, @"participant": [participant toJSON] }];
 }
 
 # pragma mark - TVIRemoteParticipantDelegate

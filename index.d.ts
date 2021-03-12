@@ -83,7 +83,7 @@ declare module 'react-native-twilio-video-webrtc' {
     ref?: React.Ref<any>;
   }
 
-  interface Participant {
+  export interface Participant {
     sid: string;
     identity: string;
   }
@@ -123,6 +123,10 @@ declare module 'react-native-twilio-video-webrtc' {
     participant: Participant;
   };
 
+  type NullableParticipantEventArgs = RoomEventCommonArgs & {
+    participant: Participant | null;
+  }
+
   export type MessageReceivedEventCb = ({
     message: string,
     senderId: string,
@@ -133,6 +137,7 @@ declare module 'react-native-twilio-video-webrtc' {
   export type RoomErrorEventCb = (t: RoomErrorEventArgs) => void;
 
   export type ParticipantEventCb = (p: ParticipantEventArgs) => void;
+  export type NullableParticipantEventCb = (p: NullableParticipantEventArgs) => void;
 
   export interface NetworkLevelChangeEvent {
     participant: Participant;
@@ -192,6 +197,7 @@ declare module 'react-native-twilio-video-webrtc' {
     // if audioBitrate OR videoBitrate is provided, you must provide both
     audioBitrate?: number;
     videoBitrate?: number;
+    enableDominantSpeaker?: boolean;
   }
 
   interface ITwilioVideo {
@@ -252,6 +258,8 @@ declare module 'react-native-twilio-video-webrtc' {
     onStatsReceived: TwilioSubscription<StatsReceivedEventCb>;
 
     onNetworkQualityLevelsChanged: TwilioSubscription<NetworkLevelChangeEventCb>;
+
+    onDominantSpeakerChanged: TwilioSubscription<NullableParticipantEventCb>;
   }
 
   const TwilioVideo: ITwilioVideo;
