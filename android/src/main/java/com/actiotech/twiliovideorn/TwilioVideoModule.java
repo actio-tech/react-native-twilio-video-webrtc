@@ -20,6 +20,7 @@ import android.os.HandlerThread;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.StringDef;
 
 import android.os.Looper;
@@ -117,6 +118,7 @@ import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_PARTICIPAN
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_STATS_RECEIVED;
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_VIDEO_CHANGED;
 import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_NETWORK_QUALITY_LEVELS_CHANGED;
+import static com.actiotech.twiliovideorn.TwilioVideoModule.Events.ON_DOMINANT_SPEAKER_CHANGED;
 
 public class TwilioVideoModule extends ReactContextBaseJavaModule implements LifecycleEventListener, StatsListener {
     private static final String TAG = "TwilioVideoModule";
@@ -150,7 +152,8 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             Events.ON_PARTICIPANT_ENABLED_AUDIO_TRACK,
             Events.ON_PARTICIPANT_DISABLED_AUDIO_TRACK,
             Events.ON_STATS_RECEIVED,
-            Events.ON_NETWORK_QUALITY_LEVELS_CHANGED})
+            Events.ON_NETWORK_QUALITY_LEVELS_CHANGED,
+            Events.ON_DOMINANT_SPEAKER_CHANGED})
     public @interface Events {
         String ON_CAMERA_SWITCHED = "TwilioVideo.onCameraSwitched";
         String ON_VIDEO_CHANGED = "TwilioVideo.onVideoChanged";
@@ -176,6 +179,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         String ON_PARTICIPANT_DISABLED_AUDIO_TRACK = "TwilioVideo.onParticipantDisabledAudioTrack";
         String ON_STATS_RECEIVED = "TwilioVideo.onStatsReceived";
         String ON_NETWORK_QUALITY_LEVELS_CHANGED = "TwilioVideo.onNetworkQualityLevelsChanged";
+        String ON_DOMINANT_SPEAKER_CHANGED = "TwilioVideo.onDominantSpeakerChanged";
     }
 
     private final ReactContext context;
@@ -441,6 +445,7 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
         int videoBitrate = options.hasKey("videoBitrate")
                 ? options.getInt("videoBitrate")
                 : DefaultVideoBitrate;
+        boolean enabledDominantSpeaker = options.getBoolean("enableDominantSpeaker");
 
         /*
          * Create a VideoClient allowing you to connect to a Room
@@ -450,6 +455,10 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
 
         if (this.roomName != null) {
             connectOptionsBuilder.roomName(this.roomName);
+        }
+
+        if (enabledDominantSpeaker) {
+            connectOptionsBuilder.enableDominantSpeaker(true);
         }
 
         if (localAudioTrack != null) {
@@ -820,6 +829,16 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
             @Override
             public void onRecordingStopped(Room room) {
             }
+
+            @Override
+            public void onDominantSpeakerChanged(@NonNull Room room, @Nullable RemoteParticipant remoteParticipant) {
+                WritableMap event = new WritableNativeMap();
+                event.putString("roomName", room.getName());
+                event.putString("roomSid", room.getSid());
+                event.putMap("participant", buildParticipant(remoteParticipant));
+
+                pushEvent(ON_DOMINANT_SPEAKER_CHANGED, event);
+            }
         };
     }
 
@@ -1052,6 +1071,9 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
     }
 
     private WritableMap buildParticipant(Participant participant) {
+        if (participant == null) {
+            return null;
+        }
         WritableMap participantMap = new WritableNativeMap();
         participantMap.putString("identity", participant.getIdentity());
         participantMap.putString("sid", participant.getSid());

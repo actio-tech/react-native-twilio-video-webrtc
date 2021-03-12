@@ -299,6 +299,12 @@ class TwilioVideo {
     );
   };
 
+  // Stats
+
+  onStatsReceived = callback => {
+    return this.eventEmitter.addListener('TwilioVideo.onStatsReceived', callback);
+  };
+
   onNetworkQualityLevelsChanged = callback => {
     return this.eventEmitter.addListener(
       'TwilioVideo.onNetworkQualityLevelsChanged',
@@ -306,11 +312,12 @@ class TwilioVideo {
     );
   }
 
-  // Stats
-
-  onStatsReceived = callback => {
-    return this.eventEmitter.addListener('TwilioVideo.onStatsReceived', callback);
-  };
+  onDominantSpeakerChanged = callback => {
+    return this.eventEmitter.addListener(
+      'TwilioVideo.onDominantSpeakerChanged',
+      callback,
+    );
+  }
 }
 
 export default new TwilioVideo();
