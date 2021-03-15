@@ -116,6 +116,7 @@ class TwilioVideo {
       ...options,
       enableAudio: options.enableAudio ?? true,
       enableVideo: options.enableVideo ?? true,
+      enableDominantSpeaker: options.enableDominantSpeaker ?? false,
       enableAutomaticSubscription: options.enableAutomaticSubscription ?? false,
       enableNetworkQualityReporting: options.enableNetworkQualityReporting ?? false,
       ...(options.audioBitrate ? { audioBitrate: options.audioBitrate } : {}),
