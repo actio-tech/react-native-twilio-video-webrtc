@@ -530,6 +530,10 @@ RCT_EXPORT_METHOD(disconnect) {
     [self sendEventCheckingListenerWithName:roomDidConnect body:@{ @"roomName" : room.name , @"roomSid": room.sid, @"participants" : participants }];
 
     localParticipant.delegate = self;
+    
+    for (TVILocalAudioTrackPublication* audioTrack in localParticipant.localAudioTracks) {
+        [self sendEventCheckingListenerWithName:participantAddedAudioTrack body:@{ @"participant": [localParticipant toJSON], @"track": [audioTrack toJSON] }];
+    };
 }
 
 - (void)room:(TVIRoom *)room didDisconnectWithError:(nullable NSError *)error {
@@ -665,6 +669,10 @@ RCT_EXPORT_METHOD(disconnect) {
 
 - (void)localParticipant:(nonnull TVILocalParticipant *)participant networkQualityLevelDidChange:(TVINetworkQualityLevel)networkQualityLevel {
     [self sendEventCheckingListenerWithName:networkQualityLevelsChanged body:@{ @"participant": [participant toJSON], @"isLocalUser": [NSNumber numberWithBool:true], @"quality": [NSNumber numberWithInt:(int)networkQualityLevel]}];
+}
+
+- (void)localParticipant:(TVILocalParticipant *)participant didPublishAudioTrack:(TVILocalAudioTrackPublication *)audioTrackPublication {
+    [self sendEventCheckingListenerWithName:participantAddedAudioTrack body:@{ @"participant": [participant toJSON], @"track": [audioTrackPublication toJSON] }];
 }
 
 @end

@@ -757,6 +757,11 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
                 for (RemoteParticipant participant : participants) {
                     addParticipant(room, participant);
                 }
+
+                for (AudioTrackPublication audioTrack: localParticipant.getAudioTracks()) {
+                    WritableMap audioEvent = buildParticipantVideoEvent(localParticipant, audioTrack);
+                    pushEvent(ON_PARTICIPANT_ADDED_AUDIO_TRACK, audioEvent);
+                }
             }
 
             @Override
@@ -848,7 +853,8 @@ public class TwilioVideoModule extends ReactContextBaseJavaModule implements Lif
 
             @Override
             public void onAudioTrackPublished(LocalParticipant localParticipant, LocalAudioTrackPublication localAudioTrackPublication) {
-
+                WritableMap event = buildParticipantVideoEvent(localParticipant, localAudioTrackPublication);
+                pushEvent(ON_PARTICIPANT_ADDED_AUDIO_TRACK, event);
             }
 
             @Override
